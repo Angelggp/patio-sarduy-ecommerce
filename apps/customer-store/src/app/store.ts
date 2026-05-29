@@ -4,9 +4,27 @@ type CartState = {
   itemsByPlantId: Record<string, number>
 }
 
-const initialCartState: CartState = {
-  itemsByPlantId: {},
+const CART_STORAGE_KEY = 'patio-sarduy:cart'
+
+function loadCartState(): CartState {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY)
+    if (!raw) return { itemsByPlantId: {} }
+    return JSON.parse(raw) as CartState
+  } catch {
+    return { itemsByPlantId: {} }
+  }
 }
+
+function saveCartState(state: CartState) {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state))
+  } catch {
+    // cuota de almacenamiento llena — se ignora
+  }
+}
+
+const initialCartState: CartState = loadCartState()
 
 const appSlice = createSlice({
   name: 'app',
@@ -58,6 +76,10 @@ export const store = configureStore({
     app: appSlice.reducer,
     cart: cartSlice.reducer,
   },
+})
+
+store.subscribe(() => {
+  saveCartState(store.getState().cart)
 })
 
 export type RootState = ReturnType<typeof store.getState>

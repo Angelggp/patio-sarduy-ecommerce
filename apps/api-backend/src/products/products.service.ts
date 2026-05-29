@@ -61,7 +61,7 @@ export class ProductsService {
       ? Number(filters.page)
       : 1;
     const normalizedPageSize = Number.isInteger(filters.pageSize) && Number(filters.pageSize) > 0
-      ? Math.min(Number(filters.pageSize), 100)
+      ? Math.min(Number(filters.pageSize), 500)
       : 20;
 
     const [results, total] = await this.productsRepository.findMany({

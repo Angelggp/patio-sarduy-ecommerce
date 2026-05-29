@@ -26,7 +26,7 @@ export function OrdersPage() {
               Zona privada
             </div>
 
-            <h1 className="mb-0 text-[clamp(2rem,4vw,3.3rem)] leading-[0.95] text-[color:var(--text-on-dark)]">
+            <h1 className="mb-0 text-[clamp(2rem,4vw,3.3rem)] leading-[0.95] text-white]">
               Debes loguearte para ver tus pedidos
             </h1>
 

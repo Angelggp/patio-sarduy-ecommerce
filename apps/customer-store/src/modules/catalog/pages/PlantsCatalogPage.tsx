@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Minus, Plus, Search, Sparkles } from 'lucide-react'
+import { Minus, Plus, Search, ShoppingBag, SlidersHorizontal, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useDispatch, useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 
 import type { RootState } from '@/app/store'
 import { decrementPlantQty, incrementPlantQty } from '@/app/store'
-import { Button } from '@/components/ui/button'
 import { usePlantsCatalogQuery } from '@/modules/catalog/hooks/use-plants-catalog-query'
 
 const moneyFormatter = new Intl.NumberFormat('es-CU', {
@@ -13,42 +14,65 @@ const moneyFormatter = new Intl.NumberFormat('es-CU', {
   maximumFractionDigits: 0,
 })
 
+type CategoryId =
+  | 'all'
+  | 'TREE'
+  | 'SHRUB'
+  | 'HERB'
+  | 'CLIMBER'
+  | 'SUCCULENT'
+  | 'PALM'
+  | 'culinary'
+  | 'medicinal'
+  | 'aromatic'
+
+const CATEGORY_PILLS: { id: CategoryId; label: string }[] = [
+  { id: 'all', label: 'Todas' },
+  { id: 'TREE', label: 'Árbol' },
+  { id: 'SHRUB', label: 'Arbusto' },
+  { id: 'HERB', label: 'Hierba' },
+  { id: 'CLIMBER', label: 'Trepadora' },
+  { id: 'SUCCULENT', label: 'Suculenta' },
+  { id: 'PALM', label: 'Palma' },
+  { id: 'culinary', label: 'Culinaria' },
+  { id: 'medicinal', label: 'Medicinal' },
+  { id: 'aromatic', label: 'Aromática' },
+]
+
+const GROWTH_FORM_IDS: readonly string[] = ['TREE', 'SHRUB', 'HERB', 'CLIMBER', 'SUCCULENT', 'PALM']
+const USE_FILTER_IDS: readonly string[] = ['culinary', 'medicinal', 'aromatic']
+
 export function PlantsCatalogPage() {
   const dispatch = useDispatch()
   const itemsByPlantId = useSelector((state: RootState) => state.cart.itemsByPlantId)
 
-  const [searchText, setSearchText] = useState('')
-  const [selectedGrowthForm, setSelectedGrowthForm] = useState('Todas' as 'Todas' | 'TREE' | 'SHRUB' | 'HERB' | 'CLIMBER' | 'SUCCULENT' | 'PALM')
-  const [selectedUseFilter, setSelectedUseFilter] = useState<'all' | 'culinary' | 'medicinal' | 'aromatic'>('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const q = searchParams.get('q') ?? ''
+
+  const [selectedCategory, setSelectedCategory] = useState<CategoryId>('all')
+  const [showMoreFilters, setShowMoreFilters] = useState(false)
   const [selectedUse, setSelectedUse] = useState('Todos')
 
-  const { data: plants = [], isLoading, isFetching, error } = usePlantsCatalogQuery({
-    q: searchText,
-    growthForm: selectedGrowthForm,
-    useFilter: selectedUseFilter === 'all' ? undefined : selectedUseFilter,
+  const growthForm = GROWTH_FORM_IDS.includes(selectedCategory)
+    ? (selectedCategory as 'TREE' | 'SHRUB' | 'HERB' | 'CLIMBER' | 'SUCCULENT' | 'PALM')
+    : ('Todas' as const)
+
+  const useFilter = USE_FILTER_IDS.includes(selectedCategory)
+    ? (selectedCategory as 'culinary' | 'medicinal' | 'aromatic')
+    : undefined
+
+  const { data, isLoading, isFetching, error } = usePlantsCatalogQuery({
+    q,
+    growthForm,
+    useFilter,
   })
-
-  const growthFormOptions = [
-    { value: 'Todas', label: 'Todas' },
-    { value: 'TREE', label: 'Arbol' },
-    { value: 'SHRUB', label: 'Arbusto' },
-    { value: 'HERB', label: 'Hierba' },
-    { value: 'CLIMBER', label: 'Trepadora' },
-    { value: 'SUCCULENT', label: 'Suculenta' },
-    { value: 'PALM', label: 'Palma' },
-  ] as const
-
-  const useFilterOptions = [
-    { value: 'all', label: 'Todos' },
-    { value: 'culinary', label: 'Culinaria' },
-    { value: 'medicinal', label: 'Medicinal' },
-    { value: 'aromatic', label: 'Aromatica' },
-  ] as const
+  const plants = data?.plants ?? []
+  const totalInDb = data?.total ?? 0
 
   const useOptions = useMemo(() => ['Todos', ...new Set(plants.flatMap((plant) => plant.uses))], [plants])
 
   const filteredPlants = useMemo(() => {
-    const normalizedSearch = searchText.trim().toLowerCase()
+    const normalizedSearch = q.trim().toLowerCase()
 
     return plants.filter((plant) => {
       const matchesSearch =
@@ -59,123 +83,117 @@ export function PlantsCatalogPage() {
 
       return matchesSearch && matchesUse
     })
-  }, [plants, searchText, selectedUse])
-
-  const cartItemCount = useMemo(() => {
-    return Object.values(itemsByPlantId).reduce<number>((acc, quantity) => acc + quantity, 0)
-  }, [itemsByPlantId])
+  }, [plants, q, selectedUse])
 
   const cardDelayStep = 90
 
   return (
-    <section className="space-y-7 pb-8">
-      <div className="relative overflow-hidden rounded-[var(--radius-xl)] border border-border bg-[linear-gradient(135deg,#ffffff_0%,#eaf5ee_45%,#dff0e6_100%)] px-6 py-7 shadow-[var(--shadow-soft)] lg:px-10 lg:py-10">
-        <div className="pointer-events-none absolute -top-20 right-3 h-52 w-52 rounded-full bg-[radial-gradient(circle,rgba(34,211,95,0.27)_0%,rgba(34,211,95,0)_72%)]" />
-        <div className="pointer-events-none absolute -bottom-16 left-8 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(8,39,21,0.13)_0%,rgba(8,39,21,0)_72%)]" />
-
-        <div className="relative space-y-5">
-          <div className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-border/70 bg-card/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            <Sparkles className="size-3.5 text-primary" />
-            Jardin vivo para casa
-          </div>
-
-          <div className="space-y-2">
-            <h1 className="mb-0">Plantas listas para tu espacio</h1>
-            <p className="max-w-2xl text-[15px] text-muted-foreground lg:text-base">
-              Explora especies seleccionadas con informacion practica para decidir rapido: precio,
-              usos y forma de crecimiento. Agrega al carrito y ajusta cantidades sin salir del
-              catalogo.
-            </p>
-          </div>
-
-          <div className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] bg-[color:var(--bg-deep-forest)] px-4 py-2 text-sm font-semibold text-[color:var(--text-on-dark)] shadow-[var(--shadow-float)]">
-            Carrito activo: {cartItemCount} unidad{cartItemCount === 1 ? '' : 'es'}
-          </div>
+    <section className="pb-8">
+      {/* ── Sticky: buscador + categorías ── */}
+      <div className="sticky top-0 z-30 -mx-4 space-y-3 bg-background/95 px-4 pb-3 pt-4 backdrop-blur-sm lg:-mx-8 lg:top-[52px] lg:px-8">
+        {/* Buscador */}
+        <div className="flex items-center gap-3 rounded-full border border-border bg-card px-5 py-3 shadow-[var(--shadow-soft)]">
+          <Search className="size-4 shrink-0 text-muted-foreground" />
+          <input
+            value={q}
+            onChange={(e) => {
+              setSearchParams(
+                (prev) => {
+                  if (e.target.value) prev.set('q', e.target.value)
+                  else prev.delete('q')
+                  return prev
+                },
+                { replace: true },
+              )
+            }}
+            placeholder="Buscar por nombre común o científico..."
+            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+          />
+          {q && (
+            <button
+              onClick={() =>
+                setSearchParams((prev) => { prev.delete('q'); return prev }, { replace: true })
+              }
+              className="shrink-0 text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          )}
         </div>
-      </div>
 
-      <div className="grid gap-4 rounded-[var(--radius-lg)] border border-border bg-card p-4 shadow-[var(--shadow-soft)] lg:grid-cols-[2.1fr_1fr_1fr] lg:items-end lg:p-5">
-        <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Buscar planta
-          </span>
-          <div className="flex h-11 items-center gap-2 rounded-[var(--radius-pill)] border border-input bg-background px-4">
-            <Search className="size-4 text-muted-foreground" />
-            <input
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
-              placeholder="Nombre comun o cientifico"
-              className="h-full w-full border-none bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-            />
+        {/* Filtros por categoría */}
+        <div className="flex items-center gap-2">
+          <div className="flex flex-1 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {CATEGORY_PILLS.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                  selectedCategory === cat.id
+                    ? 'bg-foreground text-background'
+                    : 'border border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
           </div>
-        </label>
-
-        <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Crecimiento
-          </span>
-          <select
-            value={selectedGrowthForm}
-            onChange={(event) =>
-              setSelectedGrowthForm(
-                event.target.value as 'Todas' | 'TREE' | 'SHRUB' | 'HERB' | 'CLIMBER' | 'SUCCULENT' | 'PALM',
-              )
-            }
-            className="h-11 w-full rounded-[var(--radius-pill)] border border-input bg-background px-4 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+          <button
+            onClick={() => setShowMoreFilters((v) => !v)}
+            className={`shrink-0 rounded-full border p-2.5 transition-colors ${
+              showMoreFilters || selectedUse !== 'Todos'
+                ? 'border-foreground bg-foreground text-background'
+                : 'border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground'
+            }`}
+            title="Más filtros"
           >
-            {growthFormOptions.map((growthForm) => (
-              <option key={growthForm.value} value={growthForm.value}>
-                {growthForm.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            <SlidersHorizontal className="size-4" />
+          </button>
+        </div>
 
-        <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Uso principal
-          </span>
-          <select
-            value={selectedUseFilter}
-            onChange={(event) =>
-              setSelectedUseFilter(
-                event.target.value as 'all' | 'culinary' | 'medicinal' | 'aromatic',
-              )
-            }
-            className="h-11 w-full rounded-[var(--radius-pill)] border border-input bg-background px-4 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+        {/* Panel de filtros extra */}
+        <AnimatePresence>
+          {showMoreFilters && (
+          <motion.div
+            key="more-filters"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
           >
-            {useFilterOptions.map((useOption) => (
-              <option key={useOption.value} value={useOption.value}>
-                {useOption.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            <div className="rounded-[var(--radius-lg)] border border-border bg-card p-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                Tag de uso
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {useOptions.map((use) => (
+                  <button
+                    key={use}
+                    onClick={() => setSelectedUse(use)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                      selectedUse === use
+                        ? 'bg-foreground text-background'
+                        : 'border border-border bg-background text-muted-foreground hover:bg-secondary hover:text-foreground'
+                    }`}
+                  >
+                    {use}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      </div>{/* fin sticky */}
 
-        <label className="space-y-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Tag de uso
-          </span>
-          <select
-            value={selectedUse}
-            onChange={(event) => setSelectedUse(event.target.value)}
-            className="h-11 w-full rounded-[var(--radius-pill)] border border-input bg-background px-4 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
-          >
-            {useOptions.map((useOption) => (
-              <option key={useOption} value={useOption}>
-                {useOption}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Mostrando {filteredPlants.length} de {plants.length} plantas
-        </p>
-
-        {isFetching ? <p className="text-xs text-muted-foreground">Actualizando resultados...</p> : null}
+      {/* ── Conteo ── */}
+      <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+        <span>{filteredPlants.length} planta{filteredPlants.length !== 1 ? 's' : ''}</span>
+        {!isLoading && totalInDb > 0 && (
+          <span className="text-muted-foreground/60">· {totalInDb} en total</span>
+        )}
+        {isFetching && <span>· Actualizando...</span>}
       </div>
 
       {error ? (
@@ -185,8 +203,27 @@ export function PlantsCatalogPage() {
       ) : null}
 
       {isLoading ? (
-        <div className="rounded-[var(--radius-lg)] border border-border bg-card px-5 py-9 text-center text-sm text-muted-foreground">
-          Cargando catalogo...
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card shadow-[var(--shadow-card)]"
+            >
+              <div className="h-52 animate-pulse bg-secondary" />
+              <div className="space-y-4 px-4 pb-4 pt-3">
+                <div className="space-y-2">
+                  <div className="h-3 w-24 animate-pulse rounded-full bg-secondary" />
+                  <div className="h-6 w-3/4 animate-pulse rounded bg-secondary" />
+                  <div className="h-4 w-14 animate-pulse rounded-full bg-secondary" />
+                </div>
+                <div className="flex gap-2">
+                  <div className="h-6 w-16 animate-pulse rounded-full bg-secondary" />
+                  <div className="h-6 w-20 animate-pulse rounded-full bg-secondary" />
+                </div>
+                <div className="h-10 w-full animate-pulse rounded-full bg-secondary" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : filteredPlants.length === 0 ? (
         <div className="rounded-[var(--radius-lg)] border border-dashed border-border bg-card px-5 py-9 text-center text-sm text-muted-foreground">
@@ -238,38 +275,47 @@ export function PlantsCatalogPage() {
                     ))}
                   </div>
 
-                  {quantityInCart === 0 ? (
-                    <Button
+                  {plant.stock === 0 ? (
+                    <button
                       type="button"
-                      className="w-full"
-                      onClick={() => dispatch(incrementPlantQty(plant.id))}
+                      disabled
+                      className="flex w-full cursor-not-allowed items-center justify-center rounded-full py-2.5 text-sm font-semibold opacity-50 bg-secondary text-muted-foreground"
                     >
+                      Sin stock
+                    </button>
+                  ) : quantityInCart === 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => dispatch(incrementPlantQty(plant.id))}
+                      className="flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold transition-opacity hover:opacity-90 active:scale-[0.98]"
+                      style={{ backgroundColor: 'var(--bg-deep-forest)', color: 'var(--text-on-dark)' }}
+                    >
+                      <ShoppingBag className="size-4" />
                       Agregar al carrito
-                    </Button>
+                    </button>
                   ) : (
-                    <div className="flex items-center justify-between rounded-[var(--radius-pill)] border border-border bg-secondary px-2 py-1.5">
-                      <Button
+                    <div className="flex items-center justify-between rounded-full border border-border bg-card px-2 py-1.5">
+                      <button
                         type="button"
-                        size="icon-xs"
-                        variant="outline"
                         onClick={() => dispatch(decrementPlantQty(plant.id))}
+                        className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                         aria-label={`Disminuir cantidad de ${plant.nameCommon}`}
                       >
                         <Minus className="size-3.5" />
-                      </Button>
-
+                      </button>
                       <span className="text-sm font-semibold text-foreground">
                         {quantityInCart} en carrito
                       </span>
-
-                      <Button
+                      <button
                         type="button"
-                        size="icon-xs"
                         onClick={() => dispatch(incrementPlantQty(plant.id))}
+                        disabled={plant.stock !== null && quantityInCart >= plant.stock}
+                        className="flex size-8 items-center justify-center rounded-full transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                        style={{ backgroundColor: 'var(--bg-deep-forest)', color: 'var(--text-on-dark)' }}
                         aria-label={`Aumentar cantidad de ${plant.nameCommon}`}
                       >
                         <Plus className="size-3.5" />
-                      </Button>
+                      </button>
                     </div>
                   )}
                 </div>

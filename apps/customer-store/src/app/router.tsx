@@ -5,6 +5,7 @@ import { AuthPage } from '@/modules/auth/pages/AuthPage'
 import { PlantsCatalogPage } from '@/modules/catalog/pages/PlantsCatalogPage'
 import { OrdersPage } from '@/modules/orders/pages/OrdersPage'
 import { CheckoutPage } from '@/modules/checkout/pages/CheckoutPage'
+import { LandingPage } from '@/modules/landing/pages/LandingPage'
 
 export const router = createBrowserRouter([
   {
@@ -13,7 +14,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <PlantsCatalogPage />,
+        element: <LandingPage />,
       },
       {
         path: 'plantas',

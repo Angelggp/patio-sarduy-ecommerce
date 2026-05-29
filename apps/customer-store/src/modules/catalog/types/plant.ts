@@ -6,6 +6,7 @@ export type Plant = {
   scientificName: string
   imageUrl: string
   priceCUP: number
+  stock: number | null
   uses: string[]
   growthForm: GrowthForm
 }

@@ -6,7 +6,7 @@
 
 :root {
   /* Core tokens: definidos en DESIGN_SYSTEM.md */
-  --bg-canvas: #f1f2f1;
+  --bg-canvas: #eef4f0;
   --bg-surface: #ffffff;
   --bg-soft-mint: #dfe9e2;
   --bg-deep-forest: #082715;
@@ -43,8 +43,8 @@
   --radius-xl: 28px;
   --radius-pill: 999px;
 
-  --sans: 'Plus Jakarta Sans', Manrope, 'Segoe UI', sans-serif;
-  --heading: 'Clash Display', Satoshi, 'Segoe UI', sans-serif;
+  --sans: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+  --heading: 'DM Serif Display', Georgia, serif;
   --mono: ui-monospace, Consolas, monospace;
 
   font: 18px/145% var(--sans);

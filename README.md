@@ -1,53 +1,126 @@
-# Turborepo starter
+# Patio Sarduy — E-commerce
 
-This Turborepo starter is maintained by the Turborepo core team.
+Plataforma de venta online para el organopónico comunitario Patio Sarduy, Cienfuegos, Cuba.  
+Permite explorar el catálogo de plantas, armar un carrito y confirmar pedidos de recogida en tienda.
 
-## Using this example
+---
 
-Run the following command:
+## Estructura del proyecto
 
-```sh
-npx create-turbo@latest
+Monorepo gestionado con **Turborepo** y **pnpm workspaces**.
+
+```
+apps/
+  api-backend/      → API REST (NestJS 11 + TypeORM + PostgreSQL)
+  customer-store/   → Tienda del cliente (React 19 + Vite + Tailwind CSS v4)
+  e-commerce/       → Panel de administración (React 19 + Vite)
 ```
 
-## What's inside?
+---
 
-This Turborepo includes the following packages/apps:
+## Requisitos previos
 
-### Apps and Packages
+- Node.js 18+
+- pnpm 9+
+- Docker y Docker Compose
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+---
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## Levantar el entorno local
 
-### Utilities
+### 1. Infraestructura (base de datos + almacenamiento)
 
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```bash
+docker compose up -d
 ```
 
-Without global `turbo`, use your package manager:
+Levanta:
+- **PostgreSQL 18** → `localhost:5434` (usuario/contraseña: `postgres`, base de datos: `patio_sarduy`)
+- **MinIO** → `localhost:9000` (consola en `localhost:9001`, usuario/contraseña: `minioadmin`)
 
-```sh
-cd my-turborepo
-npx turbo build
+### 2. Instalar dependencias
+
+```bash
+pnpm install
+```
+
+### 3. Aplicar migraciones de base de datos (primera vez)
+
+```bash
+cd apps/api-backend
+pnpm run migration:run
+```
+
+### 4. Iniciar todos los servicios
+
+Desde la raíz del monorepo:
+
+```bash
+pnpm dev
+```
+
+O por separado:
+
+```bash
+# Backend
+cd apps/api-backend && pnpm dev      # http://localhost:3000
+
+# Tienda del cliente
+cd apps/customer-store && pnpm dev   # http://localhost:5173
+
+# Panel admin
+cd apps/e-commerce && pnpm dev
+```
+
+---
+
+## Variables de entorno — Backend
+
+Crea un archivo `.env` en `apps/api-backend/` con:
+
+```env
+DB_HOST=localhost
+DB_PORT=5434
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=patio_sarduy
+
+MINIO_ENDPOINT=localhost
+MINIO_PORT=9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_BUCKET=patio-sarduy
+
+JWT_SECRET=cambia_esto_en_produccion
+```
+
+---
+
+## Stack tecnológico
+
+| Capa | Tecnología |
+|---|---|
+| Backend | NestJS 11, TypeORM 0.3, PostgreSQL 18 |
+| Frontend tienda | React 19, Vite, Tailwind CSS v4, Shadcn/ui, Framer Motion |
+| Estado global | Redux Toolkit + TanStack Query |
+| Autenticación | JWT (Bearer token) |
+| Almacenamiento imágenes | MinIO (compatible S3) |
+| Monorepo | Turborepo + pnpm workspaces |
+
+---
+
+## Scripts útiles
+
+```bash
+pnpm dev              # Inicia todos los apps en paralelo
+pnpm build            # Compila todos los apps
+pnpm lint             # Linting en todo el monorepo
+
+# Migraciones (desde apps/api-backend)
+pnpm run migration:run     # Aplica migraciones pendientes
+pnpm run migration:revert  # Revierte la última migración
+```
+
 pnpm dlx turbo build
 pnpm exec turbo build
 ```
