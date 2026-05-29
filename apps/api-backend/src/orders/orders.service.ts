@@ -437,14 +437,15 @@ async function discountStockForOrderItems(items: OrderItem[], transactionManager
       throw new NotFoundException(`Producto con id ${productId} no existe.`);
     }
 
-    if (product.population < requestedQuantity) {
-      throw new ConflictException(
-        `Stock insuficiente para ${product.commonName}. Disponible: ${product.population}, solicitado: ${requestedQuantity}.`,
-      );
+    if (product.population !== null && product.population !== undefined) {
+      if (product.population < requestedQuantity) {
+        throw new ConflictException(
+          `Stock insuficiente para ${product.commonName}. Disponible: ${product.population}, solicitado: ${requestedQuantity}.`,
+        );
+      }
+      product.population = product.population - requestedQuantity;
+      await transactionManager.getRepository(Product).save(product);
     }
-
-    product.population -= requestedQuantity;
-    await transactionManager.getRepository(Product).save(product);
   }
 }
 
@@ -463,10 +464,12 @@ async function ensureStockForOrderItems(items: OrderItem[], transactionManager: 
       throw new NotFoundException(`Producto con id ${productId} no existe.`);
     }
 
-    if (product.population < requestedQuantity) {
-      throw new ConflictException(
-        `Stock insuficiente para ${product.commonName}. Disponible: ${product.population}, solicitado: ${requestedQuantity}.`,
-      );
+    if (product.population !== null && product.population !== undefined) {
+      if (product.population < requestedQuantity) {
+        throw new ConflictException(
+          `Stock insuficiente para ${product.commonName}. Disponible: ${product.population}, solicitado: ${requestedQuantity}.`,
+        );
+      }
     }
   }
 }

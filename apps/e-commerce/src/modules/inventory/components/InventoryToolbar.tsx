@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 
 import { type RootState } from '@/app/store'
 import { CreatePlantModal } from '@/modules/inventory/components/CreatePlantModal'
+import { ImportCsvModal } from '@/modules/inventory/components/ImportCsvModal'
 import { PlantFiltersModal } from '@/modules/inventory/components/PlantFiltersModal'
 import { type InventoryFilters } from '@/modules/inventory/types/inventory.types'
 
@@ -37,6 +38,7 @@ export function InventoryToolbar({
 
         <div className='flex flex-wrap gap-2 lg:ml-auto'>
           <PlantFiltersModal value={filters} onApply={onFiltersChange} />
+          {canCreatePlants ? <ImportCsvModal /> : null}
           {canCreatePlants ? <CreatePlantModal /> : null}
         </div>
       </div>

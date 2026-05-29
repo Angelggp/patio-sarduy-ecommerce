@@ -1,6 +1,5 @@
 import {
   Column,
-  DeleteDateColumn,
   Entity,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -28,14 +27,17 @@ export enum ThreatCategory {
 }
 
 export class MainPopularUse {
-  @Column({ type: 'boolean' })
+  @Column({ type: 'boolean', default: false })
   culinary: boolean;
 
-  @Column({ type: 'boolean' })
+  @Column({ type: 'boolean', default: false })
   medicinal: boolean;
 
-  @Column({ type: 'boolean' })
+  @Column({ type: 'boolean', default: false })
   aromatic: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  popularUse: boolean;
 }
 
 @Entity()
@@ -43,10 +45,13 @@ export class Product {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'integer', nullable: true })
+  plantNumber?: number;
+
   @Column({ type: 'varchar', length: 100 })
   commonName: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 255 })
   scientificName: string;
 
   @Column({ type: 'varchar', length: 100 })
@@ -55,34 +60,34 @@ export class Product {
   @Column({ type: 'varchar', length: 100 })
   family: string;
 
-  @Column({ type: 'enum', enum: GrowthForm })
-  growthForm: GrowthForm;
+  @Column({ type: 'enum', enum: GrowthForm, nullable: true })
+  growthForm?: GrowthForm;
 
-  @Column({ type: 'varchar', length: 100 })
-  origin: string;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  origin?: string;
 
-  @Column({ type: 'varchar', length: 100 })
-  provenance: string;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  provenance?: string;
 
-  @Column({ type: 'varchar', length: 100 })
-  collector: string;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  collector?: string;
 
-  @Column({ type: 'enum', enum: ThreatCategory })
-  threatCategory: ThreatCategory;
+  @Column({ type: 'enum', enum: ThreatCategory, nullable: true })
+  threatCategory?: ThreatCategory;
 
-  @Column({ type: 'boolean' })
-  isEndemic: boolean;
+  @Column({ type: 'boolean', nullable: true })
+  isEndemic?: boolean;
 
   @Column({ type: 'decimal', nullable: true })
   price?: number;
 
-  @Column({ type: 'integer' })
-  population: number;
+  @Column({ type: 'integer', nullable: true })
+  population?: number;
 
-  @Column({ type: 'timestamp' })
-  registrationDate: Date;
+  @Column({ type: 'timestamp', nullable: true })
+  registrationDate?: Date;
 
-  @DeleteDateColumn({ type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   deathDate?: Date;
 
   @Column({ type: 'varchar', length: 180, nullable: true })

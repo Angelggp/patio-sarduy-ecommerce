@@ -151,4 +151,9 @@ export class ProductsRepository {
       throw new NotFoundException(`Producto con id ${id} no existe.`);
     }
   }
+
+  async importOne(data: Partial<Product>): Promise<Product> {
+    const entity = this.ormRepository.create(data);
+    return this.ormRepository.save(entity);
+  }
 }

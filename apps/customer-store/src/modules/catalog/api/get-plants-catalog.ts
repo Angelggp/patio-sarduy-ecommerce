@@ -7,13 +7,14 @@ const productSchema = z.object({
   id: z.number(),
   commonName: z.string(),
   scientificName: z.string(),
-  growthForm: z.enum(['TREE', 'SHRUB', 'HERB', 'CLIMBER', 'SUCCULENT', 'PALM']),
+  growthForm: z.enum(['TREE', 'SHRUB', 'HERB', 'CLIMBER', 'SUCCULENT', 'PALM']).nullable().optional(),
   imagePath: z.string().nullable().optional(),
   price: z.coerce.number().nullable().optional(),
   mainPopularUse: z.object({
     culinary: z.boolean(),
     medicinal: z.boolean(),
     aromatic: z.boolean(),
+    popularUse: z.boolean().optional(),
   }),
 })
 
@@ -89,7 +90,7 @@ export async function getPlantsCatalog(query: PlantsCatalogQuery = {}): Promise<
       imageUrl: product.imagePath || fallbackImageByIndex[index % fallbackImageByIndex.length],
       priceCUP: product.price ?? 0,
       uses: uses.length > 0 ? uses : ['Ornamental'],
-      growthForm: growthFormLabelMap[product.growthForm] ?? 'Vertical',
+      growthForm: (product.growthForm ? growthFormLabelMap[product.growthForm] : null) ?? 'Vertical',
     }
   })
 }

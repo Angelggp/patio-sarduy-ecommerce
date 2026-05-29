@@ -369,10 +369,10 @@ function PlantDetailsModal({
           </EditableFieldRow>
 
           <EditableFieldRow
-            label='Poblacion'
+            label='Stock (cant. individuos)'
             value={typeof plant.population === 'number' ? plant.population.toLocaleString('es-CU') : '0'}
             isEditing={editingField === 'population'}
-            onStartEdit={() => startEditing('population', String(plant.population))}
+            onStartEdit={() => startEditing('population', String(plant.population ?? 0))}
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
@@ -609,7 +609,7 @@ function PlantCard({ plant, onOpen }: { plant: InventoryPlant; onOpen: (plant: I
         </div>
 
         <div className='flex items-center justify-between text-sm'>
-          <span className='text-(--text-body)'>Poblacion: {plant.population}</span>
+          <span className='text-(--text-body)'>Stock: {plant.population ?? 0} individuos</span>
           <span className='font-semibold text-(--text-strong)'>
             {plant.price ? `$${Number(plant.price).toFixed(2)}` : 'Sin precio'}
           </span>

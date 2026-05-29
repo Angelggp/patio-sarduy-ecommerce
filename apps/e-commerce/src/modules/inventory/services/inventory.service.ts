@@ -4,6 +4,7 @@ import {
   type CreatePlantPayload,
   type CreatePresignedUploadRequest,
   type CreatePresignedUploadResponse,
+  type ImportCsvResult,
   type InventoryFindManyResponse,
   type InventoryPlant,
   type InventoryQueryParams,
@@ -12,6 +13,7 @@ import {
   createPlantPayloadSchema,
   createPresignedUploadRequestSchema,
   createPresignedUploadResponseSchema,
+  importCsvResultSchema,
   inventoryPlantSchema,
   inventoryFindManyResponseSchema,
   updatePlantPayloadSchema,
@@ -63,6 +65,15 @@ export const inventoryService = {
 
   async deleteOne(id: number): Promise<void> {
     await apiClient.delete(`/products/${id}`)
+  },
+
+  async importCsv(file: File): Promise<ImportCsvResult> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await apiClient.post('/products/import-csv', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return importCsvResultSchema.parse(response.data)
   },
 }
 

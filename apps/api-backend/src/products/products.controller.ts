@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
@@ -7,7 +8,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { QueryProductsDto } from './dto/query-products.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
-import { ProductsService } from './products.service';
+import { type ImportCsvResult, ProductsService } from './products.service';
 
 @Controller('products')
 export class ProductsController {
@@ -38,5 +39,14 @@ export class ProductsController {
   @Roles(USER_ROLE.ADMIN, USER_ROLE.ASSISTANT)
   deleteOne(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.productsService.deleteOne(id);
+  }
+
+  @Post('import-csv')
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.ASSISTANT)
+  @UseInterceptors(FileInterceptor('file'))
+  importCsv(
+    @UploadedFile() file: { buffer: Buffer; originalname: string },
+  ): Promise<ImportCsvResult> {
+    return this.productsService.importCsv(file.buffer);
   }
 }

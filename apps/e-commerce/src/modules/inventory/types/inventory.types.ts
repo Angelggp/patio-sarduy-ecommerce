@@ -10,6 +10,7 @@ export const inventoryMainPopularUseSchema = z.object({
   culinary: z.boolean(),
   medicinal: z.boolean(),
   aromatic: z.boolean(),
+  popularUse: z.boolean().optional().default(false),
 })
 
 export const inventoryPlantSchema = z.object({
@@ -18,15 +19,15 @@ export const inventoryPlantSchema = z.object({
   scientificName: z.string(),
   genus: z.string(),
   family: z.string(),
-  growthForm: growthFormSchema,
-  origin: z.string(),
-  provenance: z.string(),
-  collector: z.string(),
-  threatCategory: threatCategorySchema,
-  isEndemic: z.boolean(),
+  growthForm: growthFormSchema.nullable().optional(),
+  origin: z.string().nullable().optional(),
+  provenance: z.string().nullable().optional(),
+  collector: z.string().nullable().optional(),
+  threatCategory: threatCategorySchema.nullable().optional(),
+  isEndemic: z.boolean().nullable().optional(),
   price: z.coerce.number().nullable().optional(),
-  population: z.number(),
-  registrationDate: z.string().or(z.date()),
+  population: z.number().nullable().optional(),
+  registrationDate: z.string().or(z.date()).nullable().optional(),
   deathDate: z.string().or(z.date()).nullable().optional(),
   imagePath: z.string().nullable().optional(),
   mainPopularUse: inventoryMainPopularUseSchema,
@@ -120,3 +121,10 @@ export type CreatePlantInput = z.infer<typeof createPlantInputSchema>
 export type UpdatePlantPayload = z.infer<typeof updatePlantPayloadSchema>
 export type CreatePresignedUploadRequest = z.infer<typeof createPresignedUploadRequestSchema>
 export type CreatePresignedUploadResponse = z.infer<typeof createPresignedUploadResponseSchema>
+
+export const importCsvResultSchema = z.object({
+  inserted: z.number(),
+  errors: z.array(z.object({ commonName: z.string(), message: z.string() })),
+})
+
+export type ImportCsvResult = z.infer<typeof importCsvResultSchema>
