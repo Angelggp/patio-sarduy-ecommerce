@@ -1,7 +1,20 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import {
+  Archive,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  CreditCard,
+  LayoutGrid,
+  LogOut,
+  Menu,
+  Package,
+  ShieldCheck,
+  X,
+} from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
 import { clearAuthSession, type AppDispatch, type RootState } from '@/app/store'
 import { type UserRole } from '@/modules/auth/types/auth.types'
 import { clearStoredAuthSession } from '@/modules/auth/utils/auth-storage'
@@ -10,19 +23,21 @@ type NavigationItem = {
   label: string
   to: string
   roles: UserRole[]
+  icon: React.ElementType
 }
 
 const primaryNavigation: NavigationItem[] = [
-  { label: 'Inventario', to: '/admin/inventario', roles: ['ADMIN', 'ASSISTANT', 'STUDENT'] },
-  { label: 'Pedidos', to: '/admin/pedidos', roles: ['ADMIN', 'ASSISTANT'] },
-  { label: 'Historial', to: '/admin/historial', roles: ['ADMIN', 'ASSISTANT'] },
-  { label: 'Pagos', to: '/admin/pagos', roles: ['ADMIN', 'ASSISTANT'] },
+  { label: 'Inventario', to: '/admin/inventario', roles: ['ADMIN', 'ASSISTANT', 'STUDENT'], icon: Archive },
+  { label: 'Pedidos', to: '/admin/pedidos', roles: ['ADMIN', 'ASSISTANT'], icon: Package },
+  { label: 'Historial', to: '/admin/historial', roles: ['ADMIN', 'ASSISTANT'], icon: ClipboardList },
+  { label: 'Pagos', to: '/admin/pagos', roles: ['ADMIN', 'ASSISTANT'], icon: CreditCard },
 ]
 
 const accessNavigation: NavigationItem = {
   label: 'Usuarios y Permisos',
   to: '/admin/usuarios-permisos',
   roles: ['ADMIN', 'ASSISTANT'],
+  icon: ShieldCheck,
 }
 
 const roleLabelMap: Record<UserRole, string> = {
@@ -32,82 +47,208 @@ const roleLabelMap: Record<UserRole, string> = {
   CLIENT: 'Cliente',
 }
 
-function SidebarLink({ item }: { item: NavigationItem }) {
+function NavItem({
+  item,
+  collapsed,
+  onClick,
+}: {
+  item: NavigationItem
+  collapsed: boolean
+  onClick?: () => void
+}) {
+  const Icon = item.icon
   return (
     <NavLink
       to={item.to}
+      onClick={onClick}
+      title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
         [
-          'block rounded-[var(--radius-pill)] px-4 py-3 text-sm font-semibold tracking-[0.02em] transition-colors duration-200',
+          'flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-sm font-medium transition-colors',
+          collapsed ? 'justify-center px-2' : '',
           isActive
-            ? 'bg-[color:var(--brand-primary)] text-[color:var(--bg-deep-forest)]'
-            : 'text-[color:var(--text-muted)] hover:bg-[color:var(--bg-soft-mint)] hover:text-[color:var(--text-strong)]',
+            ? 'bg-[color:var(--brand-primary)] text-[color:var(--bg-deep-forest)] font-semibold'
+            : 'text-[color:var(--text-body)] hover:bg-[color:var(--bg-soft-mint)] hover:text-[color:var(--text-strong)]',
         ].join(' ')
       }
     >
-      {item.label}
+      <Icon className="size-4 shrink-0" />
+      {!collapsed && <span>{item.label}</span>}
     </NavLink>
+  )
+}
+
+function SidebarContent({
+  visibleNav,
+  canAccessUsers,
+  authUser,
+  collapsed,
+  onLogout,
+  onNavClick,
+}: {
+  visibleNav: NavigationItem[]
+  canAccessUsers: boolean
+  authUser: { name: string; role: UserRole } | null
+  collapsed: boolean
+  onLogout: () => void
+  onNavClick?: () => void
+}) {
+  return (
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Logo */}
+      <div className={`mb-6 min-h-[40px] ${collapsed ? 'flex items-center justify-center' : 'px-1'}`}>
+        {collapsed ? (
+          <LayoutGrid className="size-5 text-[color:var(--brand-primary)]" />
+        ) : (
+          <>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--text-muted)]">Patio Sarduy</p>
+            <p className="mt-0.5 text-base font-semibold text-[color:var(--text-strong)]">Panel Admin</p>
+          </>
+        )}
+      </div>
+
+      {/* Usuario */}
+      {authUser && !collapsed && (
+        <div className="mb-4 rounded-[var(--radius-sm)] border border-[color:var(--border-soft)] bg-[color:var(--bg-canvas)] px-3 py-2.5">
+          <p className="truncate text-sm font-semibold text-[color:var(--text-strong)]">{authUser.name}</p>
+          <p className="text-xs text-[color:var(--text-muted)]">{roleLabelMap[authUser.role]}</p>
+        </div>
+      )}
+
+      {/* Nav */}
+      <nav className="flex flex-1 flex-col gap-1">
+        {visibleNav.map((item) => (
+          <NavItem key={item.to} item={item} collapsed={collapsed} onClick={onNavClick} />
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className="mt-4 space-y-1 border-t border-[color:var(--border-soft)] pt-4">
+        {canAccessUsers && (
+          <NavItem item={accessNavigation} collapsed={collapsed} onClick={onNavClick} />
+        )}
+        <button
+          type="button"
+          onClick={onLogout}
+          title={collapsed ? 'Cerrar sesion' : undefined}
+          className={`flex w-full items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-sm font-medium text-[color:var(--text-body)] transition-colors hover:bg-[color:var(--bg-soft-mint)] hover:text-[color:var(--text-strong)] ${collapsed ? 'justify-center px-2' : ''}`}
+        >
+          <LogOut className="size-4 shrink-0" />
+          {!collapsed && <span>Cerrar sesion</span>}
+        </button>
+      </div>
+    </div>
   )
 }
 
 export function AdminLayout() {
   const dispatch = useDispatch<AppDispatch>()
   const authUser = useSelector((state: RootState) => state.auth.user)
+  const location = useLocation()
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
 
-  const visiblePrimaryNavigation = primaryNavigation.filter((item) =>
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [location.pathname])
+
+  useEffect(() => {
+    setDrawerOpen(false)
+  }, [location.pathname])
+
+  const visibleNav = primaryNavigation.filter((item) =>
     authUser ? item.roles.includes(authUser.role) : false,
   )
-  const canAccessUsersPermissions = authUser ? accessNavigation.roles.includes(authUser.role) : false
+  const canAccessUsers = authUser ? accessNavigation.roles.includes(authUser.role) : false
 
   function handleLogout() {
     clearStoredAuthSession()
     dispatch(clearAuthSession())
   }
 
+  const sidebarProps = {
+    visibleNav,
+    canAccessUsers,
+    authUser: authUser ? { name: authUser.name, role: authUser.role } : null,
+    onLogout: handleLogout,
+  }
+
   return (
-    <div className='min-h-svh bg-[color:var(--bg-canvas)] text-[color:var(--text-strong)]'>
-      <div className='mx-auto flex min-h-svh max-w-[1360px] flex-col gap-6 p-4 md:p-6 lg:flex-row lg:gap-8 lg:p-8'>
-        <aside className='relative flex w-full shrink-0 flex-col overflow-hidden rounded-[var(--radius-xl)] border border-[color:var(--border-subtle)] bg-[color:var(--bg-surface)] p-4 shadow-[var(--shadow-soft)] lg:w-[300px]'>
-          <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,211,95,0.20),_transparent_55%)]' />
+    <div className="min-h-svh bg-[color:var(--bg-canvas)] text-[color:var(--text-strong)]">
+      {/* ── Mobile header ─────────────────────────────────────── */}
+      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-[color:var(--border-soft)] bg-[color:var(--bg-surface)] px-4 py-3 lg:hidden">
+        <div className="flex items-center gap-2">
+          <LayoutGrid className="size-5 text-[color:var(--brand-primary)]" />
+          <span className="font-semibold text-[color:var(--text-strong)]">Patio Sarduy</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setDrawerOpen(true)}
+          className="rounded-[var(--radius-sm)] p-1.5 text-[color:var(--text-body)] transition hover:bg-[color:var(--bg-soft-mint)]"
+          aria-label="Abrir menu"
+        >
+          <Menu className="size-5" />
+        </button>
+      </header>
 
-          <div className='relative mb-8'>
-            <p className='text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--text-muted)]'>
-              Patio Sarduy
-            </p>
-            <h1 className='mt-2 font-heading text-[28px] font-semibold leading-[1.1] text-[color:var(--text-strong)]'>
-              Panel de Administracion
-            </h1>
-            {authUser ? (
-              <div className='mt-2 rounded-(--radius-sm) border border-(--border-soft) bg-(--bg-canvas) px-3 py-2'>
-                <p className='text-sm font-semibold text-(--text-strong)'>{authUser.name}</p>
-                <p className='text-xs uppercase tracking-[0.12em] text-(--text-muted)'>
-                  {roleLabelMap[authUser.role]}
-                </p>
+      {/* ── Mobile drawer ─────────────────────────────────────── */}
+      <div
+        className={`fixed inset-0 z-50 lg:hidden transition-opacity duration-200 ${drawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      >
+        <div
+          className="absolute inset-0 bg-black/40"
+          onClick={() => setDrawerOpen(false)}
+        />
+        <aside
+          className={`absolute inset-y-0 left-0 w-72 overflow-y-auto border-r border-[color:var(--border-soft)] bg-[color:var(--bg-surface)] p-5 shadow-[var(--shadow-float)] transition-transform duration-200 ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        >
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-sm font-semibold text-[color:var(--text-muted)]">Menu</span>
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(false)}
+                  className="rounded-[var(--radius-sm)] p-1.5 text-[color:var(--text-body)] transition hover:bg-[color:var(--bg-soft-mint)]"
+                  aria-label="Cerrar menu"
+                >
+                  <X className="size-5" />
+                </button>
               </div>
-            ) : null}
-          </div>
+              <SidebarContent {...sidebarProps} collapsed={false} onNavClick={() => setDrawerOpen(false)} />
+        </aside>
+      </div>
 
-          <nav className='relative flex flex-col gap-2'>
-            {visiblePrimaryNavigation.map((item) => (
-              <SidebarLink key={item.to} item={item} />
-            ))}
-          </nav>
-
-          <div className='relative mt-auto space-y-3 border-t border-[color:var(--border-soft)] pt-4'>
-            {canAccessUsersPermissions ? <SidebarLink item={accessNavigation} /> : null}
-            <Button variant='outline' className='w-full' onClick={handleLogout}>
-              Cerrar sesion
-            </Button>
+      {/* ── Desktop layout ────────────────────────────────────── */}
+      <div className="hidden lg:flex lg:min-h-svh">
+        {/* Sidebar fijo */}
+        <aside
+          className={`sticky top-0 flex h-svh shrink-0 flex-col border-r border-[color:var(--border-soft)] bg-[color:var(--bg-surface)] transition-[width] duration-200 ${collapsed ? 'w-16' : 'w-60 xl:w-64'}`}
+        >
+          <div className="flex flex-1 flex-col overflow-y-auto p-3">
+            <SidebarContent {...sidebarProps} collapsed={collapsed} />
           </div>
+          {/* Toggle collapse */}
+          <button
+            type="button"
+            onClick={() => setCollapsed((v) => !v)}
+            title={collapsed ? 'Expandir menu' : 'Colapsar menu'}
+            className="flex items-center justify-center border-t border-[color:var(--border-soft)] py-3 text-[color:var(--text-muted)] transition-colors hover:bg-[color:var(--bg-soft-mint)] hover:text-[color:var(--text-strong)]"
+          >
+            {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+          </button>
         </aside>
 
-        <main className='relative flex-1 overflow-hidden rounded-[var(--radius-xl)] border border-[color:var(--border-subtle)] bg-[color:var(--bg-surface)] shadow-[var(--shadow-soft)]'>
-          <div className='pointer-events-none absolute inset-0 bg-[linear-gradient(155deg,_rgba(34,211,95,0.12)_0%,_rgba(255,255,255,0)_45%)]' />
-          <div className='relative h-full p-6 md:p-8'>
-            <Outlet />
-          </div>
+        {/* Main */}
+        <main className="min-w-0 flex-1 overflow-y-auto p-6 xl:p-8">
+          <Outlet />
         </main>
       </div>
+
+      {/* ── Mobile main ───────────────────────────────────────── */}
+      <main className="p-4 lg:hidden">
+        <Outlet />
+      </main>
     </div>
   )
 }
+
+

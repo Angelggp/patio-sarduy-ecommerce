@@ -299,34 +299,28 @@ export function UsersPermissionsPage() {
   }, [menuState])
 
   return (
-    <section className='space-y-6'>
-      <header className='relative overflow-hidden rounded-(--radius-lg) border border-(--border-soft) bg-(--bg-canvas) p-5'>
-        <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_90%_10%,rgba(34,211,95,0.16),transparent_46%)]' />
-        <div className='flex flex-wrap items-center justify-between gap-3'>
-          <div>
-            <p className='inline-flex items-center gap-2 rounded-(--radius-pill) border border-(--border-soft) bg-(--bg-surface) px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-(--text-muted)'>
-              <ShieldCheck size={14} className='text-(--status-success)' />
-              Seguridad del panel
-            </p>
-            <h2 className='mt-2 font-heading text-3xl font-semibold text-(--text-strong)'>Usuarios y Permisos</h2>
-            <p className='mt-1 text-sm text-(--text-body)'>
-              Gestiona usuarios del panel en una tabla con acciones para editar datos y cambiar contrasena.
-            </p>
-          </div>
-
-          {canCreateUsers ? (
-            <Button
-              onClick={() => {
-                setCreateForm(initialCreateForm())
-                setIsCreateModalOpen(true)
-              }}
-            >
-              <UserPlus size={16} />
-              Agregar usuario
-            </Button>
-          ) : null}
+    <section className='space-y-5'>
+      <div className='flex flex-wrap items-start justify-between gap-3'>
+        <div>
+          <h1 className='text-2xl font-semibold text-[color:var(--text-strong)] sm:text-3xl'>Usuarios y Permisos</h1>
+          <p className='mt-0.5 text-sm text-[color:var(--text-body)]'>
+            Gestiona usuarios del panel, edita datos y cambia contrasenas.
+          </p>
         </div>
-      </header>
+        {canCreateUsers ? (
+          <button
+            type='button'
+            onClick={() => {
+              setCreateForm(initialCreateForm())
+              setIsCreateModalOpen(true)
+            }}
+            className='inline-flex items-center gap-2 rounded-[var(--radius-pill)] bg-[color:var(--brand-primary)] px-4 py-2 text-sm font-semibold text-[color:var(--bg-deep-forest)] transition hover:bg-[color:var(--brand-primary-hover)]'
+          >
+            <UserPlus size={15} />
+            Agregar usuario
+          </button>
+        ) : null}
+      </div>
 
       {!canCreateUsers ? (
         <div className='rounded-(--radius-sm) border border-(--border-subtle) bg-(--bg-canvas) px-4 py-3 text-sm text-(--text-body)'>

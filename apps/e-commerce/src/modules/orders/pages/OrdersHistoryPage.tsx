@@ -136,19 +136,16 @@ export function OrdersHistoryPage() {
   }
 
   return (
-    <section className='space-y-6'>
-      <header className='rounded-(--radius-lg) border border-(--border-soft) bg-(--bg-canvas) p-5'>
-        <h2 className='font-heading text-3xl font-semibold text-(--text-strong)'>Historial de pedidos</h2>
-        <p className='mt-1 text-sm text-(--text-body)'>
-          Consulta todos los pedidos organizados por fecha y filtra por estado.
+    <section className='space-y-5'>
+      <div>
+        <h1 className='text-2xl font-semibold text-[color:var(--text-strong)] sm:text-3xl'>Historial de pedidos</h1>
+        <p className='mt-0.5 text-sm text-[color:var(--text-body)]'>
+          Consulta todos los pedidos organizados por fecha.
         </p>
-      </header>
+      </div>
 
-      <section className='rounded-(--radius-lg) border border-(--border-subtle) bg-(--bg-surface) p-4'>
-        <div className='mb-3 flex items-center gap-2 text-sm font-semibold text-(--text-strong)'>
-          <Filter size={14} />
-          <span>Filtrar por estado</span>
-        </div>
+      <section className='rounded-[var(--radius-lg)] border border-[color:var(--border-subtle)] bg-[color:var(--bg-surface)] p-4'>
+        <p className='mb-3 text-xs font-semibold uppercase tracking-[0.1em] text-[color:var(--text-muted)]'>Filtrar por estado</p>
 
         <div className='flex flex-wrap gap-2'>
           {ALL_STATUSES.map((status) => {

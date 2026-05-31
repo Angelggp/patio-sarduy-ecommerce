@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 import { Button } from '@/components/ui/button'
@@ -44,6 +44,8 @@ const createPlantDefaultValues: CreatePlantPayload = {
 export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantModalProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
+  const [localImagePreviewUrl, setLocalImagePreviewUrl] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const mutation = useCreatePlantMutation()
 
   const {
@@ -51,16 +53,11 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
     handleSubmit,
     formState: { errors },
     reset,
-    watch,
   } = useForm<CreatePlantPayload>({
     resolver: zodResolver(createPlantPayloadSchema),
     defaultValues: createPlantDefaultValues,
     mode: 'onBlur',
   })
-
-  const imagePreview = watch('imagePath')
-
-  const [localImagePreviewUrl, setLocalImagePreviewUrl] = useState<string | null>(null)
 
   useEffect(() => {
     if (!selectedImageFile) {
@@ -87,6 +84,8 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
 
   const closeModal = () => {
     setSelectedImageFile(null)
+    setLocalImagePreviewUrl(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
     setIsOpen(false)
   }
 
@@ -103,6 +102,9 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
       imageFile: selectedImageFile ?? undefined,
     })
     reset(createPlantDefaultValues)
+    setSelectedImageFile(null)
+    setLocalImagePreviewUrl(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
     closeModal()
   })
 
@@ -251,6 +253,7 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
                 <label className='space-y-1 md:col-span-2'>
                   <span className='text-sm font-semibold text-(--text-strong)'>Imagen de planta</span>
                   <input
+                    ref={fileInputRef}
                     type='file'
                     accept='image/png,image/jpeg,image/webp'
                     className='w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
@@ -286,7 +289,7 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
 
               <div className='overflow-hidden rounded-md border border-(--border-soft)'>
                 <img
-                  src={localImagePreviewUrl || imagePreview || fallbackPlantImage}
+                  src={localImagePreviewUrl || fallbackPlantImage}
                   alt='Vista previa de planta'
                   className='h-40 w-full object-cover'
                 />

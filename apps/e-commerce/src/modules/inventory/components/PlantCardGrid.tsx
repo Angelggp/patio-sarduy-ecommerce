@@ -1,9 +1,10 @@
-import { Check, Pencil, Trash2, X } from 'lucide-react'
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Camera, Check, Pencil, Trash2, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { useDeletePlantMutation } from '@/modules/inventory/hooks/useDeletePlantMutation'
 import { useUpdatePlantMutation } from '@/modules/inventory/hooks/useUpdatePlantMutation'
+import { useUploadPlantImageMutation } from '@/modules/inventory/hooks/useUploadPlantImageMutation'
 import { type InventoryPlant, type UpdatePlantPayload } from '@/modules/inventory/types/inventory.types'
 import {
   fallbackPlantImage,
@@ -116,13 +117,29 @@ function PlantDetailsModal({
 }) {
   const updateMutation = useUpdatePlantMutation()
   const deleteMutation = useDeletePlantMutation()
+  const imageMutation = useUploadPlantImageMutation()
   const [editingField, setEditingField] = useState<EditableFieldKey | null>(null)
   const [draftValue, setDraftValue] = useState<string>('')
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setEditingField(null)
     setDraftValue('')
+    setPendingImageFile(null)
+    setImagePreviewUrl(null)
   }, [plant?.id])
+
+  useEffect(() => {
+    if (!pendingImageFile) {
+      setImagePreviewUrl(null)
+      return
+    }
+    const url = URL.createObjectURL(pendingImageFile)
+    setImagePreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [pendingImageFile])
 
   if (!isOpen || !plant) {
     return null
@@ -131,7 +148,7 @@ function PlantDetailsModal({
   const plantId = plant.id
   const plantName = plant.commonName
   const registrationDate = new Date(plant.registrationDate).toLocaleDateString('es-CU')
-  const isBusy = updateMutation.isPending || deleteMutation.isPending
+  const isBusy = updateMutation.isPending || deleteMutation.isPending || imageMutation.isPending
 
   const updateErrorMessage =
     updateMutation.error && typeof updateMutation.error === 'object' && 'message' in updateMutation.error
@@ -230,6 +247,21 @@ function PlantDetailsModal({
     onPlantDeleted()
   }
 
+  async function saveImage() {
+    if (!pendingImageFile) return
+    const updated = await imageMutation.mutateAsync({ id: plantId, file: pendingImageFile })
+    setPendingImageFile(null)
+    setImagePreviewUrl(null)
+    if (imageInputRef.current) imageInputRef.current.value = ''
+    onPlantUpdated(updated)
+  }
+
+  function cancelImage() {
+    setPendingImageFile(null)
+    setImagePreviewUrl(null)
+    if (imageInputRef.current) imageInputRef.current.value = ''
+  }
+
   const usesLabel = [
     plant.mainPopularUse.culinary ? 'Culinario' : null,
     plant.mainPopularUse.medicinal ? 'Medicinal' : null,
@@ -258,6 +290,62 @@ function PlantDetailsModal({
           alt={plant.commonName}
           className='mb-4 h-56 w-full rounded-md object-cover'
         />
+
+        {/* Sección de imagen editable */}
+        <div className='mb-4 space-y-2'>
+          {pendingImageFile && imagePreviewUrl ? (
+            <div className='overflow-hidden rounded-md border border-(--border-soft)'>
+              <img src={imagePreviewUrl} alt='Vista previa' className='h-48 w-full object-cover' />
+            </div>
+          ) : null}
+
+          <div className='flex flex-wrap items-center gap-2'>
+            <label className='inline-flex cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] border border-(--border-subtle) px-3 py-1.5 text-sm font-medium text-(--text-body) transition hover:bg-(--bg-soft-mint)'>
+              <Camera size={14} />
+              {pendingImageFile ? 'Cambiar seleccion' : 'Cambiar imagen'}
+              <input
+                ref={imageInputRef}
+                type='file'
+                accept='image/png,image/jpeg,image/webp'
+                className='hidden'
+                disabled={isBusy}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null
+                  setPendingImageFile(file)
+                }}
+              />
+            </label>
+
+            {pendingImageFile ? (
+              <>
+                <button
+                  type='button'
+                  onClick={saveImage}
+                  disabled={isBusy}
+                  className='inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--brand-primary)] px-3 py-1.5 text-sm font-semibold text-(--bg-deep-forest) transition hover:opacity-90 disabled:opacity-50'
+                >
+                  <Check size={13} />
+                  {imageMutation.isPending ? 'Subiendo...' : 'Guardar imagen'}
+                </button>
+                <button
+                  type='button'
+                  onClick={cancelImage}
+                  disabled={isBusy}
+                  className='inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-(--border-subtle) px-3 py-1.5 text-sm font-medium text-(--text-body) transition hover:bg-(--bg-soft-mint) disabled:opacity-50'
+                >
+                  <X size={13} />
+                  Cancelar
+                </button>
+              </>
+            ) : null}
+          </div>
+
+          {imageMutation.error ? (
+            <p className='rounded-sm bg-[color-mix(in_oklab,var(--status-danger)_15%,white)] px-3 py-2 text-sm text-(--status-danger)'>
+              {String((imageMutation.error as { message?: unknown }).message ?? 'No se pudo subir la imagen')}
+            </p>
+          ) : null}
+        </div>
 
         <div className='grid gap-3 rounded-md border border-(--border-soft) bg-(--bg-canvas) p-4 md:grid-cols-2'>
           <EditableFieldRow
@@ -577,45 +665,43 @@ function PlantDetailsModal({
   )
 }
 
-function PlantCard({ plant, onOpen }: { plant: InventoryPlant; onOpen: (plant: InventoryPlant) => void }) {
+function PlantTableRow({ plant, onOpen }: { plant: InventoryPlant; onOpen: (plant: InventoryPlant) => void }) {
+  const uses = [
+    plant.mainPopularUse.culinary ? 'Culin.' : null,
+    plant.mainPopularUse.medicinal ? 'Med.' : null,
+    plant.mainPopularUse.aromatic ? 'Arom.' : null,
+  ].filter(Boolean).join(' · ')
+
   return (
-    <button
-      type='button'
+    <tr
+      className="cursor-pointer border-t border-[color:var(--border-soft)] text-[color:var(--text-body)] transition-colors hover:bg-[color:var(--bg-soft-mint)]/40"
       onClick={() => onOpen(plant)}
-      className='group overflow-hidden rounded-lg border border-(--border-subtle) bg-(--bg-surface) text-left shadow-(--shadow-soft) transition hover:-translate-y-1 hover:shadow-(--shadow-card)'
     >
-      <img
-        src={plant.imagePath || fallbackPlantImage}
-        alt={plant.commonName}
-        className='h-44 w-full object-cover transition duration-300 group-hover:scale-[1.03]'
-      />
-
-      <div className='space-y-2 p-4'>
-        <div>
-          <h3 className='font-heading text-lg leading-tight text-(--text-strong)'>{plant.commonName}</h3>
-          <p className='text-sm text-(--text-muted)'>{plant.scientificName}</p>
-        </div>
-
-        <div className='flex flex-wrap gap-2 text-xs font-semibold'>
-          <span className='rounded-full bg-(--bg-soft-mint) px-2.5 py-1'>
-            {growthFormLabelMap[plant.growthForm]}
-          </span>
-          <span className='rounded-full bg-(--bg-soft-mint) px-2.5 py-1'>
-            {threatCategoryLabelMap[plant.threatCategory]}
-          </span>
-          {plant.isEndemic ? (
-            <span className='rounded-full bg-(--brand-primary-soft) px-2.5 py-1'>Endemica</span>
-          ) : null}
-        </div>
-
-        <div className='flex items-center justify-between text-sm'>
-          <span className='text-(--text-body)'>Stock: {plant.population ?? 0} individuos</span>
-          <span className='font-semibold text-(--text-strong)'>
-            {plant.price ? `$${Number(plant.price).toFixed(2)}` : 'Sin precio'}
-          </span>
-        </div>
-      </div>
-    </button>
+      <td className="px-3 py-2.5 font-semibold text-[color:var(--text-strong)]">{plant.id}</td>
+      <td className="px-3 py-2.5">
+        <img
+          src={plant.imagePath || fallbackPlantImage}
+          alt={plant.commonName}
+          className="size-9 rounded-md object-cover"
+        />
+      </td>
+      <td className="px-3 py-2.5">
+        <p className="whitespace-nowrap font-medium text-[color:var(--text-strong)]">{plant.commonName}</p>
+        <p className="whitespace-nowrap text-xs italic text-[color:var(--text-muted)]">{plant.scientificName}</p>
+      </td>
+      <td className="whitespace-nowrap px-3 py-2.5">{plant.family}</td>
+      <td className="whitespace-nowrap px-3 py-2.5">{growthFormLabelMap[plant.growthForm] ?? '-'}</td>
+      <td className="whitespace-nowrap px-3 py-2.5">{threatCategoryLabelMap[plant.threatCategory]?.split(' ')[0] ?? '-'}</td>
+      <td className="whitespace-nowrap px-3 py-2.5">{plant.population ?? 0}</td>
+      <td className="whitespace-nowrap px-3 py-2.5 font-semibold text-[color:var(--text-strong)]">
+        {plant.price ? `$${Number(plant.price).toFixed(2)}` : '—'}
+      </td>
+      <td className="px-3 py-2.5">
+        {uses ? (
+          <span className="rounded-full bg-[color:var(--bg-soft-mint)] px-2 py-0.5 text-[11px] font-medium">{uses}</span>
+        ) : <span className="text-xs text-[color:var(--text-muted)]">—</span>}
+      </td>
+    </tr>
   )
 }
 
@@ -637,48 +723,62 @@ export function PlantCardGrid({
   return (
     <>
       {isLoading ? (
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div
-              key={index}
-              className='h-[290px] animate-pulse rounded-lg border border-(--border-subtle) bg-(--bg-soft-mint)'
-            />
+        <div className="space-y-2">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-12 animate-pulse rounded-[var(--radius-sm)] bg-[color:var(--bg-soft-mint)]" />
           ))}
         </div>
       ) : null}
 
       {isEmpty ? (
-        <div className='rounded-lg border border-dashed border-(--border-subtle) p-10 text-center text-(--text-muted)'>
+        <div className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-subtle)] p-10 text-center text-sm text-[color:var(--text-muted)]">
           No hay plantas para mostrar con los filtros actuales.
         </div>
       ) : null}
 
       {!isLoading && !isEmpty ? (
-        <div className='space-y-5'>
-          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-            {plants.map((plant) => (
-              <PlantCard key={plant.id} plant={plant} onOpen={setSelectedPlant} />
-            ))}
+        <div className="space-y-4">
+          <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--bg-surface)] shadow-[var(--shadow-soft)]">
+            <table className="min-w-full text-sm">
+              <thead className="bg-[color:var(--bg-canvas)] text-left text-xs font-semibold uppercase tracking-[0.08em] text-[color:var(--text-muted)]">
+                <tr>
+                  <th className="px-3 py-3">#</th>
+                  <th className="px-3 py-3">Foto</th>
+                  <th className="px-3 py-3">Nombre</th>
+                  <th className="px-3 py-3">Familia</th>
+                  <th className="px-3 py-3">Forma</th>
+                  <th className="px-3 py-3">Amenaza</th>
+                  <th className="px-3 py-3">Stock</th>
+                  <th className="px-3 py-3">Precio</th>
+                  <th className="px-3 py-3">Usos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {plants.map((plant) => (
+                  <PlantTableRow key={plant.id} plant={plant} onOpen={setSelectedPlant} />
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          <div className='flex items-center justify-end gap-2'>
-            <p className='mr-auto text-sm text-(--text-muted)'>{pageLabel}</p>
-            <Button
-              type='button'
-              variant='secondary'
+          <div className="flex items-center gap-2">
+            <p className="mr-auto text-sm text-[color:var(--text-muted)]">{pageLabel}</p>
+            <button
+              type="button"
               disabled={!canGoBack}
               onClick={() => onPageChange(page - 1)}
+              className="rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--bg-surface)] px-3 py-1.5 text-sm font-medium text-[color:var(--text-body)] transition-colors hover:bg-[color:var(--bg-soft-mint)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Anterior
-            </Button>
-            <Button
-              type='button'
-              variant='secondary'
+            </button>
+            <button
+              type="button"
               disabled={!canGoNext}
               onClick={() => onPageChange(page + 1)}
+              className="rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--bg-surface)] px-3 py-1.5 text-sm font-medium text-[color:var(--text-body)] transition-colors hover:bg-[color:var(--bg-soft-mint)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Siguiente
-            </Button>
+            </button>
           </div>
         </div>
       ) : null}

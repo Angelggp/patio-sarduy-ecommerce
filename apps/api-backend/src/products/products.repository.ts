@@ -24,7 +24,7 @@ export class ProductsRepository {
       .createQueryBuilder('product')
       .skip((page - 1) * pageSize)
       .take(pageSize)
-      .orderBy('product.id', 'DESC');
+      .orderBy('product.id', 'ASC');
 
     if (filters.q?.trim()) {
       const normalizedSearch = `%${filters.q.trim().toLowerCase()}%`;

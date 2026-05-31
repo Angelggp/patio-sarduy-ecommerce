@@ -63,6 +63,11 @@ export const inventoryService = {
     return inventoryPlantSchema.parse(response.data)
   },
 
+  async updateOneImage(id: number, imageFile: File): Promise<InventoryPlant> {
+    const imagePath = await uploadImageAndGetPublicUrl(imageFile)
+    return inventoryService.updateOne(id, { imagePath })
+  },
+
   async deleteOne(id: number): Promise<void> {
     await apiClient.delete(`/products/${id}`)
   },

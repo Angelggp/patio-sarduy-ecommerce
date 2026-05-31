@@ -160,24 +160,21 @@ export function OrdersPage() {
   )
 
   return (
-    <section className='space-y-6'>
-      <header className='rounded-(--radius-lg) border border-(--border-soft) bg-(--bg-canvas) p-5'>
-        <div className='flex flex-wrap items-center justify-between gap-4'>
-          <div>
-            <h2 className='font-heading text-3xl font-semibold text-(--text-strong)'>Pedidos</h2>
-            <p className='mt-1 text-sm text-(--text-body)'>
-              Mueve cada orden por su flujo de elaboracion. Al marcarla como lista, saldra de este tablero y pasara
-              a pagos.
-            </p>
-          </div>
-          <div className='flex items-center gap-3 rounded-(--radius-pill) border border-(--border-subtle) bg-(--bg-surface) px-4 py-2 text-sm'>
-            <Clock3 size={16} className='text-(--text-muted)' />
-            <span className='font-semibold text-(--text-strong)'>
-              Activas: {ordersQuery.data?.results.length ?? 0}
-            </span>
-          </div>
+    <section className='space-y-5'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <div>
+          <h1 className='text-2xl font-semibold text-[color:var(--text-strong)] sm:text-3xl'>Pedidos</h1>
+          <p className='mt-0.5 text-sm text-[color:var(--text-body)]'>
+            Mueve cada orden por su flujo de elaboracion.
+          </p>
         </div>
-      </header>
+        <div className='flex items-center gap-2 rounded-[var(--radius-pill)] border border-[color:var(--border-subtle)] bg-[color:var(--bg-surface)] px-4 py-2 text-sm'>
+          <Clock3 size={15} className='text-[color:var(--text-muted)]' />
+          <span className='font-semibold text-[color:var(--text-strong)]'>
+            {ordersQuery.data?.results.length ?? 0} activas
+          </span>
+        </div>
+      </div>
 
       {ordersQuery.isError ? (
         <div className='flex items-center gap-2 rounded-(--radius-sm) border border-(--status-danger)/30 bg-(--status-danger)/10 px-4 py-3 text-sm text-(--text-strong)'>
@@ -208,7 +205,7 @@ export function OrdersPage() {
         </div>
       ) : null}
 
-      <div className='grid gap-4 xl:grid-cols-2'>
+      <div className='grid gap-4 sm:grid-cols-2'>
         {KANBAN_STATUSES.map((status) => {
           const columnOrders = ordersByStatus[status]
 
