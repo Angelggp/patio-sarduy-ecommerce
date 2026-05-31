@@ -58,6 +58,10 @@ export function CustomerLayout() {
 
   const isLanding = location.pathname === '/'
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [location.pathname])
+
   const [showScrollTop, setShowScrollTop] = useState(false)
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 380)

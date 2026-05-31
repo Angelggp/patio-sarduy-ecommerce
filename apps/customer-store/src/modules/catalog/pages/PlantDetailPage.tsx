@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Check, Copy, FlaskConical, Leaf, MapPin, Share2, Sprout } from 'lucide-react'
+import { ArrowLeft, BookOpen, Check, FlaskConical, Leaf, MapPin, Share2, Sprout, X, ZoomIn } from 'lucide-react'
 import { type ElementType, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 
 import { usePlantByIdQuery } from '@/modules/catalog/hooks/use-plant-by-id-query'
 import type { ThreatCategoryKey } from '@/modules/catalog/types/plant'
@@ -26,8 +27,8 @@ const THREAT_CONFIG: Record<ThreatCategoryKey, { label: string; color: string }>
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null
   return (
-    <div className="flex gap-3 border-b border-border py-2.5 last:border-b-0">
-      <span className="w-44 shrink-0 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+    <div className="flex flex-col gap-0.5 border-b border-border py-2.5 last:border-b-0 sm:flex-row sm:gap-3">
+      <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground sm:w-44">
         {label}
       </span>
       <span className="text-sm text-foreground">{value}</span>
@@ -59,6 +60,7 @@ export function PlantDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: plant, isLoading, error } = usePlantByIdQuery(id)
   const [copied, setCopied] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
 
   const handleShare = async () => {
     const url = window.location.href
@@ -140,7 +142,7 @@ export function PlantDetailPage() {
       )}
 
       {/* Hero imagen */}
-      <div className="relative mb-8 aspect-[16/7] w-full overflow-hidden rounded-[var(--radius-xl)]">
+      <div className="relative mb-8 aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-xl)] sm:aspect-[16/7]">
         {isLoading ? (
           <div className="h-full w-full animate-pulse bg-secondary" />
         ) : (
@@ -151,20 +153,69 @@ export function PlantDetailPage() {
               className="h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-6">
+
+            {/* Botón ampliar */}
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(true)}
+              className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+              aria-label="Ver imagen ampliada"
+            >
+              <ZoomIn className="size-3.5" />
+              <span className="hidden sm:inline">Ampliar</span>
+            </button>
+
+            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
               {plant?.growthFormLabel && (
                 <span className="mb-2 inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
                   {plant.growthFormLabel}
                 </span>
               )}
-              <h1 className="m-0 text-3xl leading-tight text-white lg:text-4xl">
+              <h1 className="m-0 text-2xl leading-tight text-white sm:text-3xl lg:text-4xl">
                 {plant?.nameCommon ?? ''}
               </h1>
-              <p className="mt-1 text-base italic text-white/75">{plant?.scientificName}</p>
+              <p className="mt-1 text-sm italic text-white/75 sm:text-base">{plant?.scientificName}</p>
             </div>
           </>
         )}
       </div>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxOpen && plant?.imageUrl && (
+          <motion.div
+            key="lightbox"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+            onClick={() => setLightboxOpen(false)}
+          >
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(false)}
+              className="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+              aria-label="Cerrar"
+            >
+              <X className="size-5" />
+            </button>
+            <motion.img
+              src={plant.imageUrl}
+              alt={plant.nameCommon}
+              initial={{ scale: 0.92 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.92 }}
+              transition={{ duration: 0.2 }}
+              className="max-h-[90vh] max-w-full rounded-[var(--radius-lg)] object-contain shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <p className="absolute bottom-4 left-0 right-0 text-center text-sm text-white/60">
+              {plant.nameCommon}{plant.scientificName ? ` — ${plant.scientificName}` : ''}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="space-y-8">
         {/* Usos populares */}
