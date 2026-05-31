@@ -33,6 +33,6 @@ async function bootstrap() {
     console.warn('No se pudo ejecutar seed inicial de usuarios. Verifica migraciones.', error);
   }
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3002);
 }
 bootstrap();

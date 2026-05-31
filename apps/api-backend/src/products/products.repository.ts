@@ -17,7 +17,7 @@ export class ProductsRepository {
   async findMany(filters: QueryProductsDto): Promise<[Product[], number]> {
     const page = Number.isInteger(filters.page) && Number(filters.page) > 0 ? Number(filters.page) : 1;
     const pageSize = Number.isInteger(filters.pageSize) && Number(filters.pageSize) > 0
-      ? Math.min(Number(filters.pageSize), 100)
+      ? Math.min(Number(filters.pageSize), 1000)
       : 20;
 
     const queryBuilder = this.ormRepository
@@ -99,6 +99,10 @@ export class ProductsRepository {
     }
 
     return queryBuilder.getManyAndCount();
+  }
+
+  async findOneById(id: number): Promise<Product | null> {
+    return this.ormRepository.findOne({ where: { id } });
   }
 
   async createOne(payload: CreateProductDto): Promise<Product> {

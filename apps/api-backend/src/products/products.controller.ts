@@ -20,6 +20,12 @@ export class ProductsController {
     return this.productsService.findMany(query);
   }
 
+  @Get(':id')
+  @Public()
+  findOne(@Param('id', ParseIntPipe) id: number): Promise<Product> {
+    return this.productsService.findOne(id);
+  }
+
   @Post()
   @Roles(USER_ROLE.ADMIN, USER_ROLE.ASSISTANT)
   createOne(@Body() payload: CreateProductDto): Promise<Product> {

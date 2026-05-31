@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: patio_sarduy
     ports:
-      - "5434:5432"
+      - "5534:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:

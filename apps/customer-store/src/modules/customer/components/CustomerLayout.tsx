@@ -2,7 +2,7 @@ import { Link, NavLink, Outlet, useLocation, useMatch } from 'react-router-dom'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { useSelector } from 'react-redux'
-import { ChevronUp, Home, Leaf, ShoppingBag, ClipboardList, User } from 'lucide-react'
+import { ChevronUp, Home, Leaf, ShoppingBag, ClipboardList, User, Store } from 'lucide-react'
 
 import type { RootState } from '@/app/store'
 import { clearStoredAuthSession, getStoredAuthSession } from '@/modules/auth/utils/auth-storage'
@@ -76,7 +76,8 @@ export function CustomerLayout() {
 
           {/* Nav desktop — oculto en mobile */}
           <nav className='ml-2 flex items-center gap-1 lg:gap-2'>
-            <NavItem to='/plantas'>Plantas</NavItem>
+            <NavItem to='/plantas'>Catálogo</NavItem>
+            <NavItem to='/tienda'>Tienda</NavItem>
             <NavItem to='/checkout' badge={cartItemCount}>Carrito</NavItem>
             <NavItem to='/pedidos'>Pedidos</NavItem>
           </nav>
@@ -159,6 +160,15 @@ export function CustomerLayout() {
             }
           >
             <Leaf className='size-5' />
+          </NavLink>
+
+          <NavLink
+            to='/tienda'
+            className={({ isActive }) =>
+              `flex items-center justify-center rounded-full p-2.5 transition-colors ${isActive ? 'bg-white/15 text-white' : 'text-white/55 hover:text-white/85'}`
+            }
+          >
+            <Store className='size-5' />
           </NavLink>
 
           <div className='relative'>

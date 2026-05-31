@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { parse } from 'csv-parse/sync';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -55,6 +55,12 @@ function parseBoolCell(value: string): boolean {
 @Injectable()
 export class ProductsService {
   constructor(private readonly productsRepository: ProductsRepository) {}
+
+  async findOne(id: number): Promise<Product> {
+    const product = await this.productsRepository.findOneById(id);
+    if (!product) throw new NotFoundException(`Planta con id ${id} no encontrada.`);
+    return product;
+  }
 
   async findMany(filters: QueryProductsDto): Promise<PaginatedResponseDto<Product>> {
     const normalizedPage = Number.isInteger(filters.page) && Number(filters.page) > 0

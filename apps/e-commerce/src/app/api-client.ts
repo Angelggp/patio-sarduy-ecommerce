@@ -4,7 +4,7 @@ import { clearAuthSession, setAuthSession, store } from '@/app/store'
 import { type AuthSession, authSessionSchema } from '@/modules/auth/types/auth.types'
 import { clearStoredAuthSession, getStoredAuthSession, setStoredAuthSession } from '@/modules/auth/utils/auth-storage'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api'
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3002/api'
 
 export const apiClient = axios.create({
   baseURL,

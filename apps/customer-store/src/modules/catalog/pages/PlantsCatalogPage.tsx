@@ -1,329 +1,288 @@
 import { useMemo, useState } from 'react'
-import { Minus, Plus, Search, ShoppingBag, SlidersHorizontal, X } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useDispatch, useSelector } from 'react-redux'
-import { useSearchParams } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Eye, Search, SlidersHorizontal, X } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
 
-import type { RootState } from '@/app/store'
-import { decrementPlantQty, incrementPlantQty } from '@/app/store'
 import { usePlantsCatalogQuery } from '@/modules/catalog/hooks/use-plants-catalog-query'
+import type { GrowthFormKey, Plant } from '@/modules/catalog/types/plant'
 
-const moneyFormatter = new Intl.NumberFormat('es-CU', {
-  style: 'currency',
-  currency: 'CUP',
-  maximumFractionDigits: 0,
-})
+type UseFilterId = 'culinary' | 'medicinal' | 'aromatic'
 
-type CategoryId =
-  | 'all'
-  | 'TREE'
-  | 'SHRUB'
-  | 'HERB'
-  | 'CLIMBER'
-  | 'SUCCULENT'
-  | 'PALM'
-  | 'culinary'
-  | 'medicinal'
-  | 'aromatic'
-
-const CATEGORY_PILLS: { id: CategoryId; label: string }[] = [
-  { id: 'all', label: 'Todas' },
-  { id: 'TREE', label: 'Árbol' },
-  { id: 'SHRUB', label: 'Arbusto' },
-  { id: 'HERB', label: 'Hierba' },
-  { id: 'CLIMBER', label: 'Trepadora' },
-  { id: 'SUCCULENT', label: 'Suculenta' },
-  { id: 'PALM', label: 'Palma' },
+const USE_PILLS: { id: UseFilterId; label: string }[] = [
   { id: 'culinary', label: 'Culinaria' },
   { id: 'medicinal', label: 'Medicinal' },
   { id: 'aromatic', label: 'Aromática' },
 ]
 
-const GROWTH_FORM_IDS: readonly string[] = ['TREE', 'SHRUB', 'HERB', 'CLIMBER', 'SUCCULENT', 'PALM']
-const USE_FILTER_IDS: readonly string[] = ['culinary', 'medicinal', 'aromatic']
+const GROWTH_GROUPS: { key: GrowthFormKey; label: string }[] = [
+  { key: 'TREE', label: 'Árboles' },
+  { key: 'SHRUB', label: 'Arbustos' },
+  { key: 'HERB', label: 'Hierbas' },
+  { key: 'CLIMBER', label: 'Trepadoras' },
+  { key: 'SUCCULENT', label: 'Suculentas' },
+  { key: 'PALM', label: 'Palmas' },
+]
 
 export function PlantsCatalogPage() {
-  const dispatch = useDispatch()
-  const itemsByPlantId = useSelector((state: RootState) => state.cart.itemsByPlantId)
-
   const [searchParams, setSearchParams] = useSearchParams()
   const q = searchParams.get('q') ?? ''
+  const [activeUse, setActiveUse] = useState<UseFilterId | null>(null)
+  const [activeGroup, setActiveGroup] = useState<GrowthFormKey | null>(null)
+  const [showUsePanel, setShowUsePanel] = useState(false)
 
-  const [selectedCategory, setSelectedCategory] = useState<CategoryId>('all')
-  const [showMoreFilters, setShowMoreFilters] = useState(false)
-  const [selectedUse, setSelectedUse] = useState('Todos')
-
-  const growthForm = GROWTH_FORM_IDS.includes(selectedCategory)
-    ? (selectedCategory as 'TREE' | 'SHRUB' | 'HERB' | 'CLIMBER' | 'SUCCULENT' | 'PALM')
-    : ('Todas' as const)
-
-  const useFilter = USE_FILTER_IDS.includes(selectedCategory)
-    ? (selectedCategory as 'culinary' | 'medicinal' | 'aromatic')
-    : undefined
-
-  const { data, isLoading, isFetching, error } = usePlantsCatalogQuery({
+  const { data, isLoading, error } = usePlantsCatalogQuery({
     q,
-    growthForm,
-    useFilter,
+    useFilter: activeUse ?? undefined,
   })
+
   const plants = data?.plants ?? []
-  const totalInDb = data?.total ?? 0
 
-  const useOptions = useMemo(() => ['Todos', ...new Set(plants.flatMap((plant) => plant.uses))], [plants])
+  const filtered = useMemo(() => {
+    const norm = q.trim().toLowerCase()
+    if (!norm) return plants
+    return plants.filter(
+      (p) =>
+        p.nameCommon.toLowerCase().includes(norm) ||
+        p.scientificName.toLowerCase().includes(norm) ||
+        p.family.toLowerCase().includes(norm) ||
+        p.genus.toLowerCase().includes(norm),
+    )
+  }, [plants, q])
 
-  const filteredPlants = useMemo(() => {
-    const normalizedSearch = q.trim().toLowerCase()
+  const groups = useMemo(() => {
+    const map = new Map<GrowthFormKey | null, Plant[]>()
+    for (const plant of filtered) {
+      const key = plant.growthFormKey
+      const arr = map.get(key) ?? []
+      arr.push(plant)
+      map.set(key, arr)
+    }
+    const result: { key: GrowthFormKey | null; label: string; plants: Plant[] }[] = []
+    for (const g of GROWTH_GROUPS) {
+      const items = map.get(g.key)
+      if (items && items.length > 0) result.push({ key: g.key, label: g.label, plants: items })
+    }
+    const unclassified = map.get(null)
+    if (unclassified && unclassified.length > 0) {
+      result.push({ key: null, label: 'Sin clasificar', plants: unclassified })
+    }
+    return result
+  }, [filtered])
 
-    return plants.filter((plant) => {
-      const matchesSearch =
-        normalizedSearch.length === 0 ||
-        plant.nameCommon.toLowerCase().includes(normalizedSearch) ||
-        plant.scientificName.toLowerCase().includes(normalizedSearch)
-      const matchesUse = selectedUse === 'Todos' || plant.uses.includes(selectedUse)
-
-      return matchesSearch && matchesUse
-    })
-  }, [plants, q, selectedUse])
-
-  const cardDelayStep = 90
+  const visibleGroups = useMemo(
+    () => (activeGroup ? groups.filter((g) => g.key === activeGroup) : groups),
+    [groups, activeGroup],
+  )
 
   return (
     <section className="pb-8">
-      {/* ── Sticky: buscador + categorías ── */}
-      <div className="sticky top-0 z-30 -mx-4 space-y-3 bg-background/95 px-4 pb-3 pt-4 backdrop-blur-sm lg:-mx-8 lg:top-[52px] lg:px-8">
-        {/* Buscador */}
-        <div className="flex items-center gap-3 rounded-full border border-border bg-card px-5 py-3 shadow-[var(--shadow-soft)]">
-          <Search className="size-4 shrink-0 text-muted-foreground" />
-          <input
-            value={q}
-            onChange={(e) => {
-              setSearchParams(
-                (prev) => {
-                  if (e.target.value) prev.set('q', e.target.value)
-                  else prev.delete('q')
-                  return prev
-                },
-                { replace: true },
-              )
-            }}
-            placeholder="Buscar por nombre común o científico..."
-            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-          />
-          {q && (
-            <button
-              onClick={() =>
-                setSearchParams((prev) => { prev.delete('q'); return prev }, { replace: true })
+        {/* Sticky: búsqueda + filtros de uso */}
+        <div className="sticky top-0 z-30 -mx-4 space-y-3 bg-background/95 px-4 pb-3 pt-4 backdrop-blur-sm lg:-mx-8 lg:top-[52px] lg:px-8">
+          {/* Buscador */}
+          <div className="flex items-center gap-3 rounded-full border border-border bg-card px-5 py-3 shadow-[var(--shadow-soft)]">
+            <Search className="size-4 shrink-0 text-muted-foreground" />
+            <input
+              value={q}
+              onChange={(e) =>
+                setSearchParams(
+                  (prev) => {
+                    if (e.target.value) prev.set('q', e.target.value)
+                    else prev.delete('q')
+                    return prev
+                  },
+                  { replace: true },
+                )
               }
-              className="shrink-0 text-muted-foreground hover:text-foreground"
-            >
-              <X className="size-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Filtros por categoría */}
-        <div className="flex items-center gap-2">
-          <div className="flex flex-1 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {CATEGORY_PILLS.map((cat) => (
+              placeholder="Buscar por nombre, familia o género..."
+              className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+            />
+            {q && (
               <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() =>
+                  setSearchParams((prev) => { prev.delete('q'); return prev }, { replace: true })
+                }
+                className="shrink-0 text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Categorías + botón de uso */}
+          <div className="flex items-center gap-2">
+            <div className="flex flex-1 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <button
+                onClick={() => setActiveGroup(null)}
                 className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  selectedCategory === cat.id
+                  activeGroup === null
                     ? 'bg-foreground text-background'
                     : 'border border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground'
                 }`}
               >
-                {cat.label}
+                Todas
               </button>
-            ))}
-          </div>
-          <button
-            onClick={() => setShowMoreFilters((v) => !v)}
-            className={`shrink-0 rounded-full border p-2.5 transition-colors ${
-              showMoreFilters || selectedUse !== 'Todos'
-                ? 'border-foreground bg-foreground text-background'
-                : 'border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground'
-            }`}
-            title="Más filtros"
-          >
-            <SlidersHorizontal className="size-4" />
-          </button>
-        </div>
-
-        {/* Panel de filtros extra */}
-        <AnimatePresence>
-          {showMoreFilters && (
-          <motion.div
-            key="more-filters"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="rounded-[var(--radius-lg)] border border-border bg-card p-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                Tag de uso
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {useOptions.map((use) => (
-                  <button
-                    key={use}
-                    onClick={() => setSelectedUse(use)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                      selectedUse === use
-                        ? 'bg-foreground text-background'
-                        : 'border border-border bg-background text-muted-foreground hover:bg-secondary hover:text-foreground'
-                    }`}
-                  >
-                    {use}
-                  </button>
-                ))}
-              </div>
+              {GROWTH_GROUPS.map((g) => (
+                <button
+                  key={g.key}
+                  onClick={() => setActiveGroup(activeGroup === g.key ? null : g.key)}
+                  className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    activeGroup === g.key
+                      ? 'bg-foreground text-background'
+                      : 'border border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  }`}
+                >
+                  {g.label}
+                </button>
+              ))}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      </div>{/* fin sticky */}
 
-      {/* ── Conteo ── */}
-      <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-        <span>{filteredPlants.length} planta{filteredPlants.length !== 1 ? 's' : ''}</span>
-        {!isLoading && totalInDb > 0 && (
-          <span className="text-muted-foreground/60">· {totalInDb} en total</span>
-        )}
-        {isFetching && <span>· Actualizando...</span>}
-      </div>
-
-      {error ? (
-        <div className="rounded-[var(--radius-lg)] border border-[color:var(--status-danger)]/40 bg-card px-5 py-4 text-sm text-[color:var(--status-danger)]">
-          No se pudo consultar productos del backend. Verifica API, token o CORS.
-        </div>
-      ) : null}
-
-      {isLoading ? (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card shadow-[var(--shadow-card)]"
+            {/* Icono de filtros por uso */}
+            <button
+              onClick={() => setShowUsePanel((v) => !v)}
+              className={`shrink-0 rounded-full border p-2.5 transition-colors ${
+                showUsePanel || activeUse !== null
+                  ? 'border-foreground bg-foreground text-background'
+                  : 'border-border bg-card text-muted-foreground hover:bg-secondary hover:text-foreground'
+              }`}
+              title="Filtrar por uso"
             >
-              <div className="h-52 animate-pulse bg-secondary" />
-              <div className="space-y-4 px-4 pb-4 pt-3">
-                <div className="space-y-2">
-                  <div className="h-3 w-24 animate-pulse rounded-full bg-secondary" />
-                  <div className="h-6 w-3/4 animate-pulse rounded bg-secondary" />
-                  <div className="h-4 w-14 animate-pulse rounded-full bg-secondary" />
-                </div>
-                <div className="flex gap-2">
-                  <div className="h-6 w-16 animate-pulse rounded-full bg-secondary" />
-                  <div className="h-6 w-20 animate-pulse rounded-full bg-secondary" />
-                </div>
-                <div className="h-10 w-full animate-pulse rounded-full bg-secondary" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : filteredPlants.length === 0 ? (
-        <div className="rounded-[var(--radius-lg)] border border-dashed border-border bg-card px-5 py-9 text-center text-sm text-muted-foreground">
-          No encontramos plantas con esos filtros. Ajusta tu busqueda para ver mas opciones.
-        </div>
-      ) : (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredPlants.map((plant, index) => {
-            const quantityInCart = itemsByPlantId[plant.id] ?? 0
+              <SlidersHorizontal className="size-4" />
+            </button>
+          </div>
 
-            return (
-              <article
-                key={plant.id}
-                className="catalog-card group relative overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card shadow-[var(--shadow-card)]"
-                style={{ animationDelay: `${index * cardDelayStep}ms` }}
+          {/* Panel desplegable de filtros por uso */}
+          <AnimatePresence>
+            {showUsePanel && (
+              <motion.div
+                key="use-panel"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
               >
-                <div className="relative h-52 overflow-hidden">
-                  <img
-                    src={plant.imageUrl}
-                    alt={plant.nameCommon}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
-                  />
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,39,21,0)_38%,rgba(8,39,21,0.6)_100%)]" />
-                  <div className="absolute bottom-3 left-3 rounded-[var(--radius-pill)] bg-[color:var(--bg-deep-forest)]/85 px-3 py-1 text-xs font-semibold text-[color:var(--text-on-dark)]">
-                    {plant.growthForm}
-                  </div>
-                </div>
-
-                <div className="space-y-4 px-4 pb-4 pt-3">
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                      {plant.scientificName}
-                    </p>
-                    <h2 className="mb-0 text-[22px] leading-[1.1]">{plant.nameCommon}</h2>
-                    <p className="text-sm font-semibold text-foreground">
-                      {moneyFormatter.format(plant.priceCUP)}
-                    </p>
-                  </div>
-
+                <div className="rounded-[var(--radius-lg)] border border-border bg-card p-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                    Filtrar por uso
+                  </p>
                   <div className="flex flex-wrap gap-2">
-                    {plant.uses.map((useTag) => (
-                      <span
-                        key={useTag}
-                        className="rounded-[var(--radius-pill)] border border-border bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground"
+                    {([{ id: null, label: 'Todos' }, ...USE_PILLS] as { id: UseFilterId | null; label: string }[]).map((p) => (
+                      <button
+                        key={p.id ?? 'all'}
+                        onClick={() => setActiveUse(p.id)}
+                        className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                          activeUse === p.id
+                            ? 'bg-foreground text-background'
+                            : 'border border-border bg-background text-muted-foreground hover:bg-secondary hover:text-foreground'
+                        }`}
                       >
-                        {useTag}
-                      </span>
+                        {p.label}
+                      </button>
                     ))}
                   </div>
-
-                  {plant.stock === 0 ? (
-                    <button
-                      type="button"
-                      disabled
-                      className="flex w-full cursor-not-allowed items-center justify-center rounded-full py-2.5 text-sm font-semibold opacity-50 bg-secondary text-muted-foreground"
-                    >
-                      Sin stock
-                    </button>
-                  ) : quantityInCart === 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => dispatch(incrementPlantQty(plant.id))}
-                      className="flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold transition-opacity hover:opacity-90 active:scale-[0.98]"
-                      style={{ backgroundColor: 'var(--bg-deep-forest)', color: 'var(--text-on-dark)' }}
-                    >
-                      <ShoppingBag className="size-4" />
-                      Agregar al carrito
-                    </button>
-                  ) : (
-                    <div className="flex items-center justify-between rounded-full border border-border bg-card px-2 py-1.5">
-                      <button
-                        type="button"
-                        onClick={() => dispatch(decrementPlantQty(plant.id))}
-                        className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                        aria-label={`Disminuir cantidad de ${plant.nameCommon}`}
-                      >
-                        <Minus className="size-3.5" />
-                      </button>
-                      <span className="text-sm font-semibold text-foreground">
-                        {quantityInCart} en carrito
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => dispatch(incrementPlantQty(plant.id))}
-                        disabled={plant.stock !== null && quantityInCart >= plant.stock}
-                        className="flex size-8 items-center justify-center rounded-full transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-                        style={{ backgroundColor: 'var(--bg-deep-forest)', color: 'var(--text-on-dark)' }}
-                        aria-label={`Aumentar cantidad de ${plant.nameCommon}`}
-                      >
-                        <Plus className="size-3.5" />
-                      </button>
-                    </div>
-                  )}
                 </div>
-              </article>
-            )
-          })}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      )}
-    </section>
+
+        {/* Conteo */}
+        <div className="mb-6 mt-4 text-sm text-muted-foreground">
+          {isLoading
+            ? 'Cargando catálogo...'
+            : `${visibleGroups.reduce((s, g) => s + g.plants.length, 0)} planta${visibleGroups.reduce((s, g) => s + g.plants.length, 0) !== 1 ? 's' : ''} en el catálogo`}
+        </div>
+
+        {error && (
+          <div className="mb-6 rounded-[var(--radius-lg)] border border-[color:var(--status-danger)]/40 bg-card px-5 py-4 text-sm text-[color:var(--status-danger)]">
+            No se pudo cargar el catálogo. Verifica la conexión con el servidor.
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="space-y-10">
+            {Array.from({ length: 2 }).map((_, gi) => (
+              <div key={gi}>
+                <div className="mb-4 h-6 w-32 animate-pulse rounded bg-secondary" />
+                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card"
+                    >
+                      <div className="aspect-[4/3] animate-pulse bg-secondary" />
+                      <div className="space-y-2 px-3 pb-3 pt-2.5">
+                        <div className="h-3 w-24 animate-pulse rounded-full bg-secondary" />
+                        <div className="h-5 w-3/4 animate-pulse rounded bg-secondary" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="rounded-[var(--radius-lg)] border border-dashed border-border bg-card px-5 py-9 text-center text-sm text-muted-foreground">
+            No se encontraron plantas con esos filtros. Ajusta tu búsqueda para ver más opciones.
+          </div>
+        ) : (
+          <div className="space-y-10">
+            {visibleGroups.map(({ key, label, plants: groupPlants }) => (
+              <div key={key ?? 'unclassified'}>
+                <h2 className="mb-4 text-lg font-semibold text-foreground">{label}</h2>
+                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+                  {groupPlants.map((plant, index) => (
+                    <Link
+                      key={plant.id}
+                      to={`/plantas/${plant.id}`}
+                      className="catalog-card group relative overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card text-left shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-float)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      {/* Imagen */}
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        <img
+                          src={plant.imageUrl}
+                          alt={plant.nameCommon}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
+                        />
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                          <Eye className="size-7 text-white" />
+                          <span className="text-xs font-semibold text-white tracking-wide">
+                            Ver más
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Nombres */}
+                      <div className="px-3 pb-3 pt-2.5">
+                        <p className="text-[11px] italic leading-tight text-muted-foreground">
+                          {plant.scientificName}
+                        </p>
+                        <p className="mt-0.5 text-sm font-semibold leading-snug text-foreground">
+                          {plant.nameCommon}
+                        </p>
+                        {/* Badges de uso */}
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {plant.uses.map((u) => (
+                            <span
+                              key={u}
+                              className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+                            >
+                              {u}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
   )
 }
+

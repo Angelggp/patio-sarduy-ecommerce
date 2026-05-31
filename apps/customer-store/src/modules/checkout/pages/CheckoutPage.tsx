@@ -204,8 +204,8 @@ export function CheckoutPage() {
         {isCartEmpty ? (
           <div className="space-y-3 rounded-[var(--radius-lg)] border border-dashed border-border bg-card px-5 py-10 text-center">
             <p className="text-sm text-muted-foreground">Tu carrito está vacío.</p>
-            <Link to="/plantas" className="text-sm font-medium text-primary hover:underline">
-              Ver catálogo
+            <Link to="/tienda" className="text-sm font-medium text-primary hover:underline">
+              Ver tienda
             </Link>
           </div>
         ) : (
