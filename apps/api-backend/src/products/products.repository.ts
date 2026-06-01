@@ -166,4 +166,24 @@ export class ProductsRepository {
     const entity = this.ormRepository.create(data);
     return this.ormRepository.save(entity);
   }
+
+  async existsByPlantNumberOrNames(
+    plantNumber: number | undefined,
+    commonName: string,
+    scientificName: string,
+  ): Promise<boolean> {
+    const qb = this.ormRepository.createQueryBuilder('product');
+
+    if (plantNumber != null && !isNaN(plantNumber)) {
+      qb.where('product.plantNumber = :plantNumber', { plantNumber });
+    } else {
+      qb.where(
+        'LOWER(product.commonName) = LOWER(:commonName) AND LOWER(product.scientificName) = LOWER(:scientificName)',
+        { commonName, scientificName },
+      );
+    }
+
+    const count = await qb.getCount();
+    return count > 0;
+  }
 }

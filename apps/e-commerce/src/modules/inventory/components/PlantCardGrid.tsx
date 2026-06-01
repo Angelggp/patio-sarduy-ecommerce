@@ -1,6 +1,8 @@
 import { Camera, Check, Loader2, Pencil, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useSelector } from 'react-redux'
 
+import { type RootState } from '@/app/store'
 import { Button } from '@/components/ui/button'
 import { useDeletePlantMutation } from '@/modules/inventory/hooks/useDeletePlantMutation'
 import { useUpdatePlantMutation } from '@/modules/inventory/hooks/useUpdatePlantMutation'
@@ -38,6 +40,7 @@ function EditableFieldRow({
   onSave,
   children,
   disabled,
+  readOnly,
 }: {
   label: string
   value: string
@@ -47,6 +50,7 @@ function EditableFieldRow({
   onSave: () => void
   children: ReactNode
   disabled?: boolean
+  readOnly?: boolean
 }) {
   return (
     <div className='group rounded-md border border-transparent px-2 py-1.5 transition hover:border-(--border-subtle) hover:bg-(--bg-surface)'>
@@ -79,14 +83,16 @@ function EditableFieldRow({
               </button>
             </div>
           ) : (
-            <button
-              type='button'
-              className='rounded-sm border border-(--border-subtle) p-1 text-(--text-muted) opacity-0 transition group-hover:opacity-100 hover:bg-(--bg-soft-mint)'
-              onClick={onStartEdit}
-              aria-label={`Editar ${label}`}
-            >
-              <Pencil size={14} />
-            </button>
+            !readOnly ? (
+              <button
+                type='button'
+                className='rounded-sm border border-(--border-subtle) p-1 text-(--text-muted) opacity-0 transition group-hover:opacity-100 hover:bg-(--bg-soft-mint)'
+                onClick={onStartEdit}
+                aria-label={`Editar ${label}`}
+              >
+                <Pencil size={14} />
+              </button>
+            ) : null
           )}
         </div>
       </div>
@@ -115,6 +121,8 @@ function PlantDetailsModal({
   onPlantUpdated: (plant: InventoryPlant) => void
   onPlantDeleted: () => void
 }) {
+  const authUserRole = useSelector((state: RootState) => state.auth.user?.role)
+  const canManage = authUserRole === 'ADMIN'
   const updateMutation = useUpdatePlantMutation()
   const deleteMutation = useDeletePlantMutation()
   const imageMutation = useUploadPlantImageMutation()
@@ -289,6 +297,7 @@ function PlantDetailsModal({
         />
 
         {/* Sección de imagen editable */}
+        {canManage ? (
         <div className='mb-4 space-y-2'>
           {pendingImageFile && imagePreviewUrl ? (
             <div className='overflow-hidden rounded-md border border-(--border-soft)'>
@@ -346,6 +355,7 @@ function PlantDetailsModal({
             </p>
           ) : null}
         </div>
+        ) : null}
 
         <div className='grid gap-3 rounded-md border border-(--border-soft) bg-(--bg-canvas) p-4 md:grid-cols-2'>
           <EditableFieldRow
@@ -356,6 +366,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <input
               value={draftValue}
@@ -372,6 +383,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <input
               value={draftValue}
@@ -388,6 +400,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <input
               value={draftValue}
@@ -404,6 +417,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <input
               value={draftValue}
@@ -420,6 +434,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <select
               value={draftValue}
@@ -442,6 +457,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <select
               value={draftValue}
@@ -464,6 +480,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <input
               type='number'
@@ -482,6 +499,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <input
               type='number'
@@ -501,6 +519,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <input
               value={draftValue}
@@ -517,6 +536,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <input
               value={draftValue}
@@ -533,6 +553,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <input
               value={draftValue}
@@ -549,6 +570,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <select
               value={draftValue}
@@ -575,6 +597,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <select
               value={draftValue}
@@ -596,6 +619,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <select
               value={draftValue}
@@ -617,6 +641,7 @@ function PlantDetailsModal({
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
+            readOnly={!canManage}
           >
             <select
               value={draftValue}
@@ -649,7 +674,7 @@ function PlantDetailsModal({
         ) : null}
 
         <div className='mt-5 flex items-center justify-end'>
-          {confirmingDelete ? (
+          {canManage && (confirmingDelete ? (
             <div className='flex items-center gap-3 rounded-md border border-(--status-danger)/30 bg-[color-mix(in_oklab,var(--status-danger)_8%,white)] px-4 py-3 w-full'>
               <p className='mr-auto text-sm text-(--text-strong)'>
                 ¿Eliminar <span className='font-semibold'>{plantName}</span>? Esta accion no se puede deshacer.
@@ -687,7 +712,7 @@ function PlantDetailsModal({
               <Trash2 size={16} />
               Eliminar planta
             </Button>
-          )}
+          ))}
         </div>
       </div>
     </div>

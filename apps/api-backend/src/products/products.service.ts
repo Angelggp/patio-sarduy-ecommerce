@@ -10,6 +10,7 @@ import { ProductsRepository } from './products.repository';
 
 export interface ImportCsvResult {
   inserted: number;
+  skipped: number;
   errors: { commonName: string; message: string }[];
 }
 
@@ -23,6 +24,7 @@ function parseGrowthForm(value: string): GrowthForm | undefined {
   if (v === 'arbustivo' || v === 'arbustiva') return GrowthForm.SHRUB;
   if (v === 'herbaceo' || v === 'herbacea') return GrowthForm.HERB;
   if (v === 'trepadora') return GrowthForm.CLIMBER;
+  if (v === 'liana' || v === 'lianas') return GrowthForm.LIANA;
   if (v === 'suculenta' || v === 'suculento') return GrowthForm.SUCCULENT;
   if (v === 'palma' || v === 'palmar') return GrowthForm.PALM;
   return undefined;
@@ -108,6 +110,7 @@ export class ProductsService {
     });
 
     let inserted = 0;
+    let skipped = 0;
     const errors: ImportCsvResult['errors'] = [];
 
     for (const row of records) {
@@ -117,11 +120,25 @@ export class ProductsService {
       try {
         const populationRaw = (row['Cantidad de individuos'] ?? '').trim();
         const plantNumberRaw = (row['No. Planta'] ?? '').trim();
+        const plantNumber = plantNumberRaw ? parseInt(plantNumberRaw, 10) : undefined;
+        const scientificName = (row['Nombre Científico'] ?? '').trim();
+
+        // Verificar duplicado: mismo No. Planta o misma combinacion nombre vulgar + nombre cientifico
+        const isDuplicate = await this.productsRepository.existsByPlantNumberOrNames(
+          plantNumber,
+          commonName,
+          scientificName,
+        );
+
+        if (isDuplicate) {
+          skipped++;
+          continue;
+        }
 
         await this.productsRepository.importOne({
-          plantNumber: plantNumberRaw ? parseInt(plantNumberRaw, 10) : undefined,
+          plantNumber: plantNumber,
           commonName,
-          scientificName: (row['Nombre Científico'] ?? '').trim(),
+          scientificName,
           genus: (row['Género'] ?? '').trim(),
           family: cleanFamily(row['Familia'] ?? ''),
           growthForm: parseGrowthForm(row['Porte'] ?? ''),
@@ -149,6 +166,6 @@ export class ProductsService {
       }
     }
 
-    return { inserted, errors };
+    return { inserted, skipped, errors };
   }
 }

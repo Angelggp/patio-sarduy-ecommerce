@@ -11,6 +11,7 @@ export enum GrowthForm {
   SHRUB = 'SHRUB',
   HERB = 'HERB',
   CLIMBER = 'CLIMBER',
+  LIANA = 'LIANA',
   SUCCULENT = 'SUCCULENT',
   PALM = 'PALM',
 }
@@ -36,7 +37,7 @@ export class MainPopularUse {
   @Column({ type: 'boolean', default: false })
   aromatic: boolean;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: 'boolean', default: false, name: 'PopularUse' })
   popularUse: boolean;
 }
 

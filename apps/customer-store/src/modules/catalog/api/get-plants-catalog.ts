@@ -11,7 +11,7 @@ const productSchema = z.object({
   scientificName: z.string(),
   genus: z.string(),
   family: z.string(),
-  growthForm: z.enum(['TREE', 'SHRUB', 'HERB', 'CLIMBER', 'SUCCULENT', 'PALM']).nullable().optional(),
+  growthForm: z.enum(['TREE', 'SHRUB', 'HERB', 'CLIMBER', 'LIANA', 'SUCCULENT', 'PALM']).nullable().optional(),
   origin: z.string().nullable().optional(),
   provenance: z.string().nullable().optional(),
   collector: z.string().nullable().optional(),
@@ -42,11 +42,18 @@ const paginatedProductsSchema = z.object({
 
 const growthFormLabelMap: Record<string, string> = {
   TREE: 'Árbol',
-  SHRUB: 'Arbusto',
-  HERB: 'Hierba',
+  SHRUB: 'Arbustivo',
+  HERB: 'Herbásea',
   CLIMBER: 'Trepadora',
-  SUCCULENT: 'Suculenta',
-  PALM: 'Palma',
+  LIANA: 'Liana',
+}
+
+function normalizeGrowthForm(value: z.infer<typeof productSchema>['growthForm']): Plant['growthFormKey'] {
+  if (value === 'TREE' || value === 'SHRUB' || value === 'HERB' || value === 'CLIMBER' || value === 'LIANA') {
+    return value
+  }
+
+  return null
 }
 
 const fallbackImage = plantaFallback as string
@@ -89,6 +96,8 @@ export async function getPlantsCatalog(query: PlantsCatalogQuery = {}): Promise<
     if (product.mainPopularUse.medicinal) uses.push('Medicinal')
     if (product.mainPopularUse.aromatic) uses.push('Aromática')
 
+    const growthFormKey = normalizeGrowthForm(product.growthForm)
+
     return {
       id: String(product.id),
       plantNumber: product.plantNumber ?? null,
@@ -106,8 +115,8 @@ export async function getPlantsCatalog(query: PlantsCatalogQuery = {}): Promise<
       stock: product.population ?? null,
       uses: uses.length > 0 ? uses : ['Ornamental'],
       majorPopularUse: product.mainPopularUse.popularUse ?? null,
-      growthFormKey: product.growthForm ?? null,
-      growthFormLabel: product.growthForm ? (growthFormLabelMap[product.growthForm] ?? 'Otro') : 'Sin clasificar',
+      growthFormKey,
+      growthFormLabel: growthFormKey ? growthFormLabelMap[growthFormKey] : 'Sin clasificar',
       threatCategory: product.threatCategory ?? null,
       isEndemic: product.isEndemic ?? null,
     }

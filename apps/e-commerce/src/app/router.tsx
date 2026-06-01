@@ -63,7 +63,7 @@ export const router = createBrowserRouter([
       {
         path: 'usuarios-permisos',
         element: (
-          <RequireRole roles={['ADMIN', 'ASSISTANT']}>
+          <RequireRole roles={['ADMIN']}>
             <UsersPermissionsPage />
           </RequireRole>
         ),

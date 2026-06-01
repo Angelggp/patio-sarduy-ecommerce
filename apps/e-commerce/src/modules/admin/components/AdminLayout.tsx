@@ -18,12 +18,14 @@ import {
 import { clearAuthSession, type AppDispatch, type RootState } from '@/app/store'
 import { type UserRole } from '@/modules/auth/types/auth.types'
 import { clearStoredAuthSession } from '@/modules/auth/utils/auth-storage'
+import { useOrdersQuery } from '@/modules/orders/hooks/useOrdersQuery'
 
 type NavigationItem = {
   label: string
   to: string
   roles: UserRole[]
   icon: React.ElementType
+  badge?: number
 }
 
 const primaryNavigation: NavigationItem[] = [
@@ -36,7 +38,7 @@ const primaryNavigation: NavigationItem[] = [
 const accessNavigation: NavigationItem = {
   label: 'Usuarios y Permisos',
   to: '/admin/usuarios-permisos',
-  roles: ['ADMIN', 'ASSISTANT'],
+  roles: ['ADMIN'],
   icon: ShieldCheck,
 }
 
@@ -72,8 +74,20 @@ function NavItem({
         ].join(' ')
       }
     >
-      <Icon className="size-4 shrink-0" />
-      {!collapsed && <span>{item.label}</span>}
+      <span className="relative shrink-0">
+        <Icon className="size-4" />
+        {!!item.badge && collapsed && (
+          <span className="absolute -right-1.5 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[color:var(--status-danger)] text-[9px] font-bold text-white">
+            {item.badge > 99 ? '99+' : item.badge}
+          </span>
+        )}
+      </span>
+      {!collapsed && <span className="flex-1">{item.label}</span>}
+      {!collapsed && !!item.badge && (
+        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[color:var(--status-danger)] px-1 text-[11px] font-bold text-white">
+          {item.badge > 99 ? '99+' : item.badge}
+        </span>
+      )}
     </NavLink>
   )
 }
@@ -148,6 +162,12 @@ export function AdminLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
 
+  const canSeeOrders = authUser?.role === 'ADMIN' || authUser?.role === 'ASSISTANT'
+  const activeOrdersQuery = useOrdersQuery(
+    { page: 1, pageSize: 1, statuses: ['PENDING', 'IN_PROGRESS', 'READY'] },
+  )
+  const activeOrdersCount = canSeeOrders ? (activeOrdersQuery.data?.meta.total ?? 0) : 0
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [location.pathname])
@@ -156,9 +176,12 @@ export function AdminLayout() {
     setDrawerOpen(false)
   }, [location.pathname])
 
-  const visibleNav = primaryNavigation.filter((item) =>
-    authUser ? item.roles.includes(authUser.role) : false,
-  )
+  const visibleNav = primaryNavigation
+    .filter((item) => authUser ? item.roles.includes(authUser.role) : false)
+    .map((item) => item.to === '/admin/pedidos' && activeOrdersCount > 0
+      ? { ...item, badge: activeOrdersCount }
+      : item
+    )
   const canAccessUsers = authUser ? accessNavigation.roles.includes(authUser.role) : false
 
   function handleLogout() {

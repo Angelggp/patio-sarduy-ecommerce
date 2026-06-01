@@ -14,7 +14,10 @@ export default new DataSource({
   password: process.env.DB_PASSWORD ?? 'postgres',
   database: process.env.DB_NAME ?? 'patio_sarduy',
   entities: [Product, DeliveryDetails, Order, OrderItem, User],
-  migrations: ['src/database/migrations/*{.ts,.js}'],
+  migrations: [
+    'src/database/migrations/*.ts',
+    'src/database/migrations/*.js',
+  ],
   synchronize: false,
   migrationsTransactionMode: 'each',
 });

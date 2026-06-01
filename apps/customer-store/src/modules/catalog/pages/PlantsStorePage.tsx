@@ -18,12 +18,11 @@ const moneyFormatter = new Intl.NumberFormat('es-CU', {
 type UseFilterId = 'culinary' | 'medicinal' | 'aromatic'
 
 const GROWTH_GROUPS: { key: GrowthFormKey; label: string }[] = [
-  { key: 'TREE', label: 'Árboles' },
-  { key: 'SHRUB', label: 'Arbustos' },
-  { key: 'HERB', label: 'Hierbas' },
-  { key: 'CLIMBER', label: 'Trepadoras' },
-  { key: 'SUCCULENT', label: 'Suculentas' },
-  { key: 'PALM', label: 'Palmas' },
+  { key: 'TREE', label: 'Árbol' },
+  { key: 'SHRUB', label: 'Arbustivo' },
+  { key: 'HERB', label: 'Herbásea' },
+  { key: 'CLIMBER', label: 'Trepadora' },
+  { key: 'LIANA', label: 'Liana' },
 ]
 
 const USE_PILLS: { id: UseFilterId; label: string }[] = [

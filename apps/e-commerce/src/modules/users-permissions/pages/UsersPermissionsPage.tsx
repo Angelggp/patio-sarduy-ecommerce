@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { AlertTriangle, KeyRound, PencilLine, ShieldCheck, UserPlus } from 'lucide-react'
+import { AlertTriangle, KeyRound, Loader2, PencilLine, ShieldCheck, UserPlus } from 'lucide-react'
 import { useSelector } from 'react-redux'
 
 import { type RootState } from '@/app/store'
@@ -535,8 +535,8 @@ export function UsersPermissionsPage() {
               >
                 Cancelar
               </Button>
-              <Button type='submit' disabled={isBusy}>
-                {createMutation.isPending ? 'Creando...' : 'Crear usuario'}
+              <Button type='submit' disabled={isBusy} className='inline-flex items-center gap-2'>
+                {createMutation.isPending ? <><Loader2 size={14} className='animate-spin' /> Creando...</> : 'Crear usuario'}
               </Button>
             </div>
           </form>
@@ -604,8 +604,8 @@ export function UsersPermissionsPage() {
               >
                 Cancelar
               </Button>
-              <Button type='submit' disabled={isBusy}>
-                {updateMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
+              <Button type='submit' disabled={isBusy} className='inline-flex items-center gap-2'>
+                {updateMutation.isPending ? <><Loader2 size={14} className='animate-spin' /> Guardando...</> : 'Guardar cambios'}
               </Button>
             </div>
           </form>
@@ -652,8 +652,8 @@ export function UsersPermissionsPage() {
               >
                 Cancelar
               </Button>
-              <Button type='submit' disabled={isBusy || passwordForm.password !== passwordForm.confirmPassword}>
-                {passwordMutation.isPending ? 'Actualizando...' : 'Cambiar contrasena'}
+              <Button type='submit' disabled={isBusy || passwordForm.password !== passwordForm.confirmPassword} className='inline-flex items-center gap-2'>
+                {passwordMutation.isPending ? <><Loader2 size={14} className='animate-spin' /> Actualizando...</> : 'Cambiar contrasena'}
               </Button>
             </div>
           </form>
