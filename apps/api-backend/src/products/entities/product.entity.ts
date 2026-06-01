@@ -80,7 +80,7 @@ export class Product {
   isEndemic?: boolean;
 
   @Column({ type: 'decimal', nullable: true })
-  price?: number;
+  price?: number | null;
 
   @Column({ type: 'integer', nullable: true })
   population?: number;
