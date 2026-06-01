@@ -21,7 +21,7 @@ export function InventoryToolbar({
   onFiltersChange,
 }: InventoryToolbarProps) {
   const authUserRole = useSelector((state: RootState) => state.auth.user?.role)
-  const canCreatePlants = authUserRole !== 'STUDENT'
+  const canCreatePlants = authUserRole === 'ADMIN'
 
   return (
     <div className='mb-6 rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-4 shadow-(--shadow-soft)'>

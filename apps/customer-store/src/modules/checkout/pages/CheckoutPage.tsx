@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
-import { Check, Minus, Plus, X } from 'lucide-react'
+import { Check, Loader2, Minus, Plus, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 import type { RootState } from '@/app/store'
@@ -192,7 +192,9 @@ export function CheckoutPage() {
             className="flex w-full items-center justify-center rounded-full py-2.5 text-sm font-semibold transition-opacity hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             style={{ backgroundColor: 'var(--bg-deep-forest)', color: 'var(--text-on-dark)' }}
           >
-            {createOrderMutation.isPending ? 'Enviando...' : 'Confirmar pedido'}
+            {createOrderMutation.isPending ? (
+              <><Loader2 size={16} className="animate-spin" /> Enviando...</>
+            ) : 'Confirmar pedido'}
           </button>
         </form>
       </div>

@@ -62,6 +62,20 @@ export class OrdersService {
 
       const orderRepository = transactionManager.getRepository(Order);
 
+      // Validar y decrementar stock inmediatamente al crear el pedido
+      for (const item of payload.items) {
+        const product = productById.get(item.productId)!;
+        if (product.population !== null && product.population !== undefined) {
+          if (product.population < item.quantity) {
+            throw new ConflictException(
+              `Stock insuficiente para ${product.commonName}. Disponible: ${product.population}, solicitado: ${item.quantity}.`,
+            );
+          }
+          product.population = product.population - item.quantity;
+          await transactionManager.getRepository(Product).save(product);
+        }
+      }
+
       const createdOrder = orderRepository.create({
         status: ORDER_STATUS.PENDING,
         type: payload.type,
@@ -233,7 +247,7 @@ export class OrdersService {
     });
   }
 
-  async cancelOrder(id: number): Promise<Order> {
+  async cancelOrder(id: number, currentUser?: { sub: number; role: USER_ROLE }): Promise<Order> {
     return this.dataSource.transaction(async (transactionManager) => {
       const orderRepository = transactionManager.getRepository(Order);
 
@@ -247,17 +261,47 @@ export class OrdersService {
         throw new NotFoundException(`Pedido con id ${id} no existe.`);
       }
 
-      if (lockedOrder.status !== ORDER_STATUS.CANCELLED) {
-        lockedOrder.status = ORDER_STATUS.CANCELLED;
-        await orderRepository.save(lockedOrder);
+      // Validar que CLIENT solo puede cancelar sus propios pedidos
+      if (currentUser?.role === USER_ROLE.CLIENT && lockedOrder.userId !== currentUser.sub) {
+        throw new BadRequestException('Solo puedes cancelar tus propios pedidos.');
       }
+
+      if (lockedOrder.status === ORDER_STATUS.CANCELLED) {
+        const existing = await orderRepository.findOne({
+          where: { id },
+          relations: { deliveryDetails: true, items: true },
+        });
+        return normalizeOrderStatusForClient(existing!);
+      }
+
+      // Cargar items por separado para reponer stock
+      const orderWithItems = await orderRepository.findOne({
+        where: { id },
+        relations: { items: true },
+      });
+
+      if (orderWithItems?.items?.length) {
+        for (const item of orderWithItems.items) {
+          const product = await transactionManager
+            .getRepository(Product)
+            .createQueryBuilder('product')
+            .where('product.id = :productId', { productId: item.productId })
+            .setLock('pessimistic_write')
+            .getOne();
+
+          if (product && product.population !== null && product.population !== undefined) {
+            product.population = product.population + item.quantity;
+            await transactionManager.getRepository(Product).save(product);
+          }
+        }
+      }
+
+      lockedOrder.status = ORDER_STATUS.CANCELLED;
+      await orderRepository.save(lockedOrder);
 
       const updatedOrder = await orderRepository.findOne({
         where: { id },
-        relations: {
-          deliveryDetails: true,
-          items: true,
-        },
+        relations: { deliveryDetails: true, items: true },
       });
 
       if (!updatedOrder) {

@@ -3,12 +3,13 @@ export const INVENTORY_SECTION_TITLE = 'Inventario'
 export const DEFAULT_INVENTORY_PAGE_SIZE = 12
 
 export const growthFormLabelMap: Record<string, string> = {
-	TREE: 'Arbol',
-	SHRUB: 'Arbusto',
-	HERB: 'Hierba',
+	TREE: 'Árbol',
+	SHRUB: 'Arbustivo',
+	HERB: 'Herbácea',
 	CLIMBER: 'Trepadora',
-	SUCCULENT: 'Suculenta',
-	PALM: 'Palma',
+	LIANA: 'Liana',
+	SUCCULENT: 'Sin clasificar',
+	PALM: 'Sin clasificar',
 }
 
 export const threatCategoryLabelMap: Record<string, string> = {

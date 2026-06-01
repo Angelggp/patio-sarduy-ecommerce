@@ -67,6 +67,11 @@ export function ImportCsvModal() {
                   </p>
                   <p className='mt-1 text-(--text-secondary)'>
                     Plantas insertadas: <span className='font-semibold'>{result.inserted}</span>
+                                    {result.skipped > 0 && (
+                                      <p className='mt-1 text-(--text-secondary)'>
+                                        Omitidas (ya existian): <span className='font-semibold'>{result.skipped}</span>
+                                      </p>
+                                    )}
                   </p>
                   {result.errors.length > 0 && (
                     <div className='mt-3'>

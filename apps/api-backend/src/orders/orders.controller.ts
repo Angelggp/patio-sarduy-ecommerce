@@ -42,9 +42,12 @@ export class OrdersController {
   }
 
   @Patch(':id/cancel')
-  @Roles(USER_ROLE.ADMIN, USER_ROLE.ASSISTANT)
-  cancelOrder(@Param('id', ParseIntPipe) id: number): Promise<Order> {
-    return this.ordersService.cancelOrder(id);
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.ASSISTANT, USER_ROLE.CLIENT)
+  cancelOrder(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: { user: { sub: number; role: USER_ROLE } },
+  ): Promise<Order> {
+    return this.ordersService.cancelOrder(id, request.user);
   }
 
   private async tryResolveUserIdFromAuthorizationHeader(

@@ -1,4 +1,4 @@
-export type GrowthFormKey = 'TREE' | 'SHRUB' | 'HERB' | 'CLIMBER' | 'SUCCULENT' | 'PALM'
+export type GrowthFormKey = 'TREE' | 'SHRUB' | 'HERB' | 'CLIMBER' | 'LIANA'
 
 export type ThreatCategoryKey = 'LC' | 'NT' | 'VU' | 'EN' | 'CR' | 'EW' | 'EX' | 'DD'
 

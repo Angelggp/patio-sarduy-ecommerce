@@ -15,12 +15,11 @@ const USE_PILLS: { id: UseFilterId; label: string }[] = [
 ]
 
 const GROWTH_GROUPS: { key: GrowthFormKey; label: string }[] = [
-  { key: 'TREE', label: 'Árboles' },
-  { key: 'SHRUB', label: 'Arbustos' },
-  { key: 'HERB', label: 'Hierbas' },
-  { key: 'CLIMBER', label: 'Trepadoras' },
-  { key: 'SUCCULENT', label: 'Suculentas' },
-  { key: 'PALM', label: 'Palmas' },
+  { key: 'TREE', label: 'Árbol' },
+  { key: 'SHRUB', label: 'Arbustivo' },
+  { key: 'HERB', label: 'Herbásea' },
+  { key: 'CLIMBER', label: 'Trepadora' },
+  { key: 'LIANA', label: 'Liana' },
 ]
 
 export function PlantsCatalogPage() {

@@ -1,9 +1,11 @@
 import { z } from 'zod'
 
-export const growthFormValues = ['TREE', 'SHRUB', 'HERB', 'CLIMBER', 'SUCCULENT', 'PALM'] as const
+export const growthFormApiValues = ['TREE', 'SHRUB', 'HERB', 'CLIMBER', 'LIANA', 'SUCCULENT', 'PALM'] as const
+export const growthFormValues = ['TREE', 'SHRUB', 'HERB', 'CLIMBER', 'LIANA'] as const
 export const threatCategoryValues = ['LC', 'NT', 'VU', 'EN', 'CR', 'EW', 'EX', 'DD'] as const
 
-export const growthFormSchema = z.enum(growthFormValues)
+export const growthFormSchema = z.enum(growthFormApiValues)
+export const growthFormSelectableSchema = z.enum(growthFormValues)
 export const threatCategorySchema = z.enum(threatCategoryValues)
 
 export const inventoryMainPopularUseSchema = z.object({
@@ -46,7 +48,7 @@ export const inventoryFindManyResponseSchema = z.object({
 })
 
 export const inventoryFiltersSchema = z.object({
-  growthForm: growthFormSchema.optional(),
+  growthForm: growthFormSelectableSchema.optional(),
   threatCategory: threatCategorySchema.optional(),
   isEndemic: z.boolean().optional(),
   culinary: z.boolean().optional(),
@@ -69,7 +71,7 @@ export const createPlantPayloadSchema = z.object({
   scientificName: z.string().min(2, 'El nombre científico es requerido (mín. 2 caracteres)').max(100),
   genus: z.string().min(2, 'El género es requerido (mín. 2 caracteres)').max(100),
   family: z.string().min(2, 'La familia es requerida (mín. 2 caracteres)').max(100),
-  growthForm: growthFormSchema,
+  growthForm: growthFormSelectableSchema,
   origin: z.string().max(100).optional().default(''),
   provenance: z.string().max(100).optional().default(''),
   collector: z.string().max(100).optional().default(''),
@@ -124,6 +126,7 @@ export type CreatePresignedUploadResponse = z.infer<typeof createPresignedUpload
 
 export const importCsvResultSchema = z.object({
   inserted: z.number(),
+  skipped: z.number().default(0),
   errors: z.array(z.object({ commonName: z.string(), message: z.string() })),
 })
 
