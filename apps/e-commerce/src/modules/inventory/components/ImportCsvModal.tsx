@@ -15,6 +15,9 @@ export function ImportCsvModal() {
     setIsOpen(false)
     setSelectedFile(null)
     setResult(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
     mutation.reset()
   }
 
@@ -27,8 +30,13 @@ export function ImportCsvModal() {
 
   async function handleImport() {
     if (!selectedFile) return
-    const data = await mutation.mutateAsync(selectedFile)
-    setResult(data)
+
+    try {
+      const data = await mutation.mutateAsync(selectedFile)
+      setResult(data)
+    } catch {
+      // El mensaje se muestra desde la mutacion; evitamos una promesa rechazada sin manejar.
+    }
   }
 
   const errorMessage =
@@ -82,10 +90,7 @@ export function ImportCsvModal() {
             ) : (
               <div className='space-y-4'>
                 {/* Selector de archivo */}
-                <div
-                  className='flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-(--border-subtle) p-8 text-center transition hover:border-(--brand-primary)'
-                  onClick={() => fileInputRef.current?.click()}
-                >
+                <label className='flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-(--border-subtle) p-8 text-center transition hover:border-(--brand-primary)'>
                   <p className='text-sm text-(--text-secondary)'>
                     {selectedFile ? selectedFile.name : 'Haz clic para seleccionar un archivo .csv'}
                   </p>
@@ -101,17 +106,18 @@ export function ImportCsvModal() {
                     className='hidden'
                     onChange={handleFileChange}
                   />
-                </div>
+                </label>
 
                 {errorMessage && (
                   <p className='text-sm text-red-600'>{errorMessage}</p>
                 )}
 
                 <div className='flex justify-end gap-2'>
-                  <Button variant='outline' onClick={handleClose} disabled={mutation.isPending}>
+                  <Button type='button' variant='outline' onClick={handleClose} disabled={mutation.isPending}>
                     Cancelar
                   </Button>
                   <Button
+                    type='button'
                     onClick={handleImport}
                     disabled={!selectedFile || mutation.isPending}
                   >

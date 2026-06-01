@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 
 import { Button } from '@/components/ui/button'
 import { useCreatePlantMutation } from '@/modules/inventory/hooks/useCreatePlantMutation'
@@ -39,6 +40,7 @@ const createPlantDefaultValues: CreatePlantPayload = {
     culinary: false,
     medicinal: false,
     aromatic: false,
+    popularUse: false,
   },
 }
 
@@ -58,7 +60,7 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<CreatePlantPayload>({
+  } = useForm<z.input<typeof createPlantPayloadSchema>, unknown, z.output<typeof createPlantPayloadSchema>>({
     resolver: zodResolver(createPlantPayloadSchema),
     defaultValues: createPlantDefaultValues,
     mode: 'onTouched',
@@ -85,8 +87,8 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
     const normalizedPayload: CreatePlantPayload = {
       ...values,
       imagePath: values.imagePath?.trim() ? values.imagePath.trim() : undefined,
-      registrationDate: new Date().toISOString(),
-      deathDate: undefined,
+      registrationDate: values.registrationDate ?? new Date().toISOString(),
+      deathDate: values.deathDate,
     }
 
     await mutation.mutateAsync({
@@ -130,7 +132,7 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
               <div className='grid gap-4 md:grid-cols-2'>
                 <label className='space-y-1'>
                   <span className='text-sm font-semibold text-(--text-strong)'>
-                    Nombre comun <span className='text-(--status-danger)'>*</span>
+                    Nombre común <span className='text-(--status-danger)'>*</span>
                   </span>
                   <input className={inputCls} {...register('commonName')} />
                   {errors.commonName && <p className={errorCls}>{errors.commonName.message}</p>}
@@ -138,7 +140,7 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
 
                 <label className='space-y-1'>
                   <span className='text-sm font-semibold text-(--text-strong)'>
-                    Nombre cientifico <span className='text-(--status-danger)'>*</span>
+                    Nombre científico <span className='text-(--status-danger)'>*</span>
                   </span>
                   <input className={inputCls} {...register('scientificName')} />
                   {errors.scientificName && (
@@ -148,7 +150,7 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
 
                 <label className='space-y-1'>
                   <span className='text-sm font-semibold text-(--text-strong)'>
-                    Genero <span className='text-(--status-danger)'>*</span>
+                    Género <span className='text-(--status-danger)'>*</span>
                   </span>
                   <input className={inputCls} {...register('genus')} />
                   {errors.genus && <p className={errorCls}>{errors.genus.message}</p>}
@@ -163,22 +165,11 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
                 </label>
 
                 <label className='space-y-1'>
-                  <span className='text-sm font-semibold text-(--text-strong)'>Forma de crecimiento</span>
+                  <span className='text-sm font-semibold text-(--text-strong)'>Porte</span>
                   <select className={inputCls} {...register('growthForm')}>
                     {growthFormValues.map((value) => (
                       <option key={value} value={value}>
                         {growthFormLabelMap[value]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className='space-y-1'>
-                  <span className='text-sm font-semibold text-(--text-strong)'>Categoria de amenaza</span>
-                  <select className={inputCls} {...register('threatCategory')}>
-                    {threatCategoryValues.map((value) => (
-                      <option key={value} value={value}>
-                        {threatCategoryLabelMap[value]}
                       </option>
                     ))}
                   </select>
@@ -195,12 +186,23 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
                 </label>
 
                 <label className='space-y-1'>
-                  <span className='text-sm font-semibold text-(--text-strong)'>Recolector</span>
+                  <span className='text-sm font-semibold text-(--text-strong)'>Colector</span>
                   <input className={inputCls} {...register('collector')} />
                 </label>
 
                 <label className='space-y-1'>
-                  <span className='text-sm font-semibold text-(--text-strong)'>Poblacion</span>
+                  <span className='text-sm font-semibold text-(--text-strong)'>Categoría de amenaza</span>
+                  <select className={inputCls} {...register('threatCategory')}>
+                    {threatCategoryValues.map((value) => (
+                      <option key={value} value={value}>
+                        {threatCategoryLabelMap[value]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className='space-y-1'>
+                  <span className='text-sm font-semibold text-(--text-strong)'>Cantidad de individuos</span>
                   <input
                     type='number'
                     min={0}
@@ -208,6 +210,30 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
                     {...register('population', { setValueAs: (v) => Number(v) })}
                   />
                   {errors.population && <p className={errorCls}>{errors.population.message}</p>}
+                </label>
+
+                <label className='space-y-1'>
+                  <span className='text-sm font-semibold text-(--text-strong)'>Fecha de alta</span>
+                  <input
+                    type='date'
+                    className={inputCls}
+                    {...register('registrationDate', {
+                      setValueAs: (v) => (v ? new Date(`${v}T00:00:00`).toISOString() : undefined),
+                    })}
+                  />
+                  {errors.registrationDate && <p className={errorCls}>{errors.registrationDate.message}</p>}
+                </label>
+
+                <label className='space-y-1'>
+                  <span className='text-sm font-semibold text-(--text-strong)'>Fecha de muerte</span>
+                  <input
+                    type='date'
+                    className={inputCls}
+                    {...register('deathDate', {
+                      setValueAs: (v) => (v ? new Date(`${v}T00:00:00`).toISOString() : undefined),
+                    })}
+                  />
+                  {errors.deathDate && <p className={errorCls}>{errors.deathDate.message}</p>}
                 </label>
 
                 <label className='space-y-1'>
@@ -237,23 +263,31 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
                 </label>
               </div>
 
-              <div className='grid gap-4 md:grid-cols-3'>
+              <div className='grid gap-4 md:grid-cols-2'>
                 <label className='flex items-center gap-2 text-sm font-medium'>
                   <input type='checkbox' {...register('isEndemic')} />
-                  Endemica
+                  Endemismo
                 </label>
-                <label className='flex items-center gap-2 text-sm font-medium'>
-                  <input type='checkbox' {...register('mainPopularUse.culinary')} />
-                  Uso culinario
-                </label>
-                <label className='flex items-center gap-2 text-sm font-medium'>
-                  <input type='checkbox' {...register('mainPopularUse.medicinal')} />
-                  Uso medicinal
-                </label>
-                <label className='flex items-center gap-2 text-sm font-medium'>
-                  <input type='checkbox' {...register('mainPopularUse.aromatic')} />
-                  Uso aromatico
-                </label>
+
+                <fieldset className='space-y-3 rounded-md border border-(--border-subtle) p-4'>
+                  <legend className='px-1 text-sm font-semibold text-(--text-strong)'>
+                    Mayor uso popular
+                  </legend>
+                  <div className='flex flex-wrap gap-4'>
+                    <label className='flex items-center gap-2 text-sm font-medium'>
+                      <input type='checkbox' {...register('mainPopularUse.medicinal')} />
+                      Medicinal
+                    </label>
+                    <label className='flex items-center gap-2 text-sm font-medium'>
+                      <input type='checkbox' {...register('mainPopularUse.aromatic')} />
+                      Aromática
+                    </label>
+                    <label className='flex items-center gap-2 text-sm font-medium'>
+                      <input type='checkbox' {...register('mainPopularUse.culinary')} />
+                      Alimento
+                    </label>
+                  </div>
+                </fieldset>
               </div>
 
               <div className='overflow-hidden rounded-md border border-(--border-soft)'>

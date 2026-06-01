@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import type { ElementType } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, Leaf, Sprout, MapPin, FlaskConical, BookOpen } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { BookOpen, FlaskConical, Leaf, MapPin, X } from 'lucide-react'
 
 import type { Plant, ThreatCategoryKey } from '@/modules/catalog/types/plant'
 
@@ -25,6 +25,7 @@ const THREAT_CONFIG: Record<ThreatCategoryKey, { label: string; color: string }>
 
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null
+
   return (
     <div className="flex gap-3 border-b border-border py-2.5 last:border-b-0">
       <span className="w-40 shrink-0 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
@@ -54,9 +55,11 @@ type Props = {
 export function PlantDetailModal({ plant, onClose }: Props) {
   useEffect(() => {
     if (!plant) return
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
     }
+
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [plant, onClose])
@@ -69,20 +72,21 @@ export function PlantDetailModal({ plant, onClose }: Props) {
   }, [plant])
 
   const threat = plant?.threatCategory ? THREAT_CONFIG[plant.threatCategory] : null
+  const majorPopularUseLabel = plant?.majorPopularUse ? 'Sí' : plant?.majorPopularUse === false ? 'No' : null
 
   const formatDate = (iso: string | null) => {
     if (!iso) return null
-    const d = new Date(iso)
-    return isNaN(d.getTime())
+
+    const date = new Date(iso)
+    return Number.isNaN(date.getTime())
       ? iso
-      : d.toLocaleDateString('es-CU', { year: 'numeric', month: 'long', day: 'numeric' })
+      : date.toLocaleDateString('es-CU', { year: 'numeric', month: 'long', day: 'numeric' })
   }
 
   return (
     <AnimatePresence>
       {plant && (
         <>
-          {/* Overlay */}
           <motion.div
             key="overlay"
             initial={{ opacity: 0 }}
@@ -94,7 +98,6 @@ export function PlantDetailModal({ plant, onClose }: Props) {
             aria-hidden="true"
           />
 
-          {/* Panel */}
           <motion.div
             key="panel"
             role="dialog"
@@ -106,7 +109,6 @@ export function PlantDetailModal({ plant, onClose }: Props) {
             transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="fixed inset-x-4 bottom-4 top-[4vh] z-50 mx-auto flex max-w-2xl flex-col overflow-hidden rounded-[var(--radius-xl)] bg-card shadow-[var(--shadow-float)] lg:inset-x-auto lg:left-1/2 lg:w-full lg:-translate-x-1/2"
           >
-            {/* Close */}
             <button
               type="button"
               onClick={onClose}
@@ -116,33 +118,43 @@ export function PlantDetailModal({ plant, onClose }: Props) {
               <X className="size-4" />
             </button>
 
-            {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto">
-              {/* Hero image */}
               <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
-                <img
-                  src={plant.imageUrl}
-                  alt={plant.nameCommon}
-                  className="h-full w-full object-cover"
-                />
+                <img src={plant.imageUrl} alt={plant.nameCommon} className="h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-5">
                   <span className="mb-2 inline-block rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
                     {plant.growthFormLabel}
                   </span>
-                  <h2
-                    id="plant-modal-title"
-                    className="m-0 text-2xl leading-tight text-white lg:text-[28px]"
-                  >
+                  <h2 id="plant-modal-title" className="m-0 text-2xl leading-tight text-white lg:text-[28px]">
                     {plant.nameCommon}
                   </h2>
                   <p className="mt-1 text-sm italic text-white/75">{plant.scientificName}</p>
                 </div>
               </div>
 
-              {/* Body */}
               <div className="space-y-7 px-5 py-6 pb-10">
-                {/* Usos populares */}
+                <div>
+                  <SectionHeading icon={BookOpen} title="Datos de la planta" />
+                  <div className="overflow-hidden rounded-[var(--radius-md)] border border-border bg-background px-4">
+                    <InfoRow label="N.° de planta" value={plant.plantNumber !== null ? String(plant.plantNumber) : null} />
+                    <InfoRow label="Nombre común" value={plant.nameCommon} />
+                    <InfoRow label="Nombre científico" value={plant.scientificName} />
+                    <InfoRow label="Género" value={plant.genus} />
+                    <InfoRow label="Familia" value={plant.family} />
+                    <InfoRow label="Porte" value={plant.growthFormLabel} />
+                    <InfoRow label="Origen" value={plant.origin} />
+                    <InfoRow label="Procedencia" value={plant.provenance} />
+                    <InfoRow label="Colector" value={plant.collector} />
+                    <InfoRow label="Categoría de amenaza" value={threat?.label ?? null} />
+                    <InfoRow label="Endemismo" value={plant.isEndemic !== null ? (plant.isEndemic ? 'Sí' : 'No') : null} />
+                    <InfoRow label="Cantidad de individuos" value={plant.stock !== null ? String(plant.stock) : null} />
+                    <InfoRow label="Fecha de alta" value={formatDate(plant.registrationDate)} />
+                    <InfoRow label="Fecha de muerte" value={formatDate(plant.deathDate)} />
+                    <InfoRow label="Mayor uso popular" value={majorPopularUseLabel} />
+                  </div>
+                </div>
+
                 <div>
                   <SectionHeading icon={Leaf} title="Usos populares" />
                   <div className="flex flex-wrap gap-2">
@@ -159,56 +171,23 @@ export function PlantDetailModal({ plant, onClose }: Props) {
                   </div>
                 </div>
 
-                {/* Clasificación botánica */}
-                <div>
-                  <SectionHeading icon={BookOpen} title="Clasificación botánica" />
-                  <div className="overflow-hidden rounded-[var(--radius-md)] border border-border bg-background px-4">
-                    <InfoRow label="Nombre científico" value={plant.scientificName} />
-                    <InfoRow label="Género" value={plant.genus} />
-                    <InfoRow label="Familia" value={plant.family} />
-                    <InfoRow label="Forma de crecimiento" value={plant.growthFormLabel} />
-                  </div>
-                </div>
-
-                {/* Distribución */}
-                {(plant.origin || plant.provenance || plant.isEndemic !== null) && (
-                  <div>
-                    <SectionHeading icon={MapPin} title="Distribución geográfica" />
-                    <div className="overflow-hidden rounded-[var(--radius-md)] border border-border bg-background px-4">
-                      <InfoRow label="Origen" value={plant.origin} />
-                      <InfoRow label="Procedencia" value={plant.provenance} />
-                      {plant.isEndemic !== null && (
-                        <InfoRow label="Endémica" value={plant.isEndemic ? 'Sí' : 'No'} />
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Estado de conservación */}
                 {threat && (
                   <div>
                     <SectionHeading icon={FlaskConical} title="Estado de conservación" />
-                    <span
-                      className={`inline-flex rounded-full border px-3.5 py-1.5 text-sm font-semibold ${threat.color}`}
-                    >
+                    <span className={`inline-flex rounded-full border px-3.5 py-1.5 text-sm font-semibold ${threat.color}`}>
                       {threat.label}
                     </span>
                   </div>
                 )}
 
-                {/* Datos de colección */}
-                {(plant.collector || plant.plantNumber !== null || plant.registrationDate) && (
-                  <div>
-                    <SectionHeading icon={Sprout} title="Datos de colección" />
-                    <div className="overflow-hidden rounded-[var(--radius-md)] border border-border bg-background px-4">
-                      {plant.plantNumber !== null && (
-                        <InfoRow label="N.° de planta" value={String(plant.plantNumber)} />
-                      )}
-                      <InfoRow label="Colector" value={plant.collector} />
-                      <InfoRow label="Fecha de registro" value={formatDate(plant.registrationDate)} />
-                    </div>
+                <div>
+                  <SectionHeading icon={MapPin} title="Clasificación botánica" />
+                  <div className="overflow-hidden rounded-[var(--radius-md)] border border-border bg-background px-4">
+                    <InfoRow label="Género" value={plant.genus} />
+                    <InfoRow label="Familia" value={plant.family} />
+                    <InfoRow label="Porte" value={plant.growthFormLabel} />
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </motion.div>

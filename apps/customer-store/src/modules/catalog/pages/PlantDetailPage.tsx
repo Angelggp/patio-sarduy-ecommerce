@@ -254,7 +254,7 @@ export function PlantDetailPage() {
                 <InfoRow label="Nombre científico" value={plant?.scientificName} />
                 <InfoRow label="Género" value={plant?.genus} />
                 <InfoRow label="Familia" value={plant?.family} />
-                <InfoRow label="Forma de crecimiento" value={plant?.growthFormLabel} />
+                <InfoRow label="Porte" value={plant?.growthFormLabel} />
               </>
             )}
           </div>
@@ -305,11 +305,11 @@ export function PlantDetailPage() {
                 Array.from({ length: 3 }).map((_, i) => <SkeletonRow key={i} />)
               ) : (
                 <>
-                  {plant?.plantNumber !== null && plant?.plantNumber !== undefined && (
-                    <InfoRow label="N.° de planta" value={String(plant.plantNumber)} />
-                  )}
+                  <InfoRow label="N.° de planta" value={plant?.plantNumber !== null && plant?.plantNumber !== null ? String(plant.plantNumber) : String(plant?.id)} />
+                   <InfoRow label="Cantidad de Individuos" value={String(plant.stock)} />
                   <InfoRow label="Colector" value={plant?.collector} />
-                  <InfoRow label="Fecha de registro" value={formatDate(plant?.registrationDate)} />
+                  <InfoRow label="Fecha de alta" value={formatDate(plant?.registrationDate)} />
+                  <InfoRow label="Fecha de Muerte" value={formatDate(plant?.deathDate)} />
                 </>
               )}
             </div>

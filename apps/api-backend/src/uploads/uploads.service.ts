@@ -139,6 +139,13 @@ export class UploadsService implements OnModuleInit {
     const baseUrl = this.publicBaseUrl.endsWith('/')
       ? this.publicBaseUrl.slice(0, -1)
       : this.publicBaseUrl;
-    return `${baseUrl}/${this.bucket}/${objectKey}`;
+
+    const normalizedBase = baseUrl.toLowerCase();
+    const normalizedBucketSuffix = `/${this.bucket.toLowerCase()}`;
+    const alreadyIncludesBucket = normalizedBase.endsWith(normalizedBucketSuffix);
+
+    return alreadyIncludesBucket
+      ? `${baseUrl}/${objectKey}`
+      : `${baseUrl}/${this.bucket}/${objectKey}`;
   }
 }

@@ -112,7 +112,13 @@ export class ProductsRepository {
       deathDate: payload.deathDate ? new Date(payload.deathDate) : undefined,
     });
 
-    return this.ormRepository.save(entity);
+    const created = await this.ormRepository.save(entity);
+    if (created.plantNumber == null) {
+      created.plantNumber = created.id;
+      return this.ormRepository.save(created);
+    }
+
+    return created;
   }
 
   async updateOne(id: number, payload: UpdateProductDto): Promise<Product> {
@@ -149,7 +155,7 @@ export class ProductsRepository {
   }
 
   async deleteOne(id: number): Promise<void> {
-    const result = await this.ormRepository.softDelete(id);
+    const result = await this.ormRepository.delete(id);
 
     if (!result.affected) {
       throw new NotFoundException(`Producto con id ${id} no existe.`);

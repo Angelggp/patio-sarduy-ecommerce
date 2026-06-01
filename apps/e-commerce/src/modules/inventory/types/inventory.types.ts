@@ -10,6 +10,7 @@ export const inventoryMainPopularUseSchema = z.object({
   culinary: z.boolean(),
   medicinal: z.boolean(),
   aromatic: z.boolean(),
+  popularUse: z.boolean().optional().default(false),
 })
 
 export const inventoryPlantSchema = z.object({

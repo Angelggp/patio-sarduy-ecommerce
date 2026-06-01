@@ -13,10 +13,12 @@ export type Plant = {
   provenance: string | null
   collector: string | null
   registrationDate: string | null
+  deathDate: string | null
   imageUrl: string
   priceCUP: number | null
   stock: number | null
   uses: string[]
+  majorPopularUse: boolean | null
   growthFormKey: GrowthFormKey | null
   growthFormLabel: string
   threatCategory: ThreatCategoryKey | null
