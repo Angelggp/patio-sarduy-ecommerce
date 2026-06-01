@@ -1,7 +1,8 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Check, FlaskConical, Leaf, MapPin, Share2, Sprout, X, ZoomIn } from 'lucide-react'
+import { ArrowLeft, BookOpen, FlaskConical, Leaf, MapPin, Share2, Sprout, X, ZoomIn } from 'lucide-react'
 import { type ElementType, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { toast } from 'sonner'
 
 import { usePlantByIdQuery } from '@/modules/catalog/hooks/use-plant-by-id-query'
 import type { ThreatCategoryKey } from '@/modules/catalog/types/plant'
@@ -59,39 +60,31 @@ function SkeletonRow() {
 export function PlantDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: plant, isLoading, error } = usePlantByIdQuery(id)
-  const [copied, setCopied] = useState(false)
   const [lightboxOpen, setLightboxOpen] = useState(false)
 
   const handleShare = async () => {
     const url = window.location.href
-    const title = plant?.nameCommon ?? 'Planta'
-    const text = plant?.scientificName ? `${title} (${plant.scientificName})` : title
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title, text, url })
-      } catch {
-        // usuario canceló — no hacer nada
-      }
-      return
-    }
 
     try {
       await navigator.clipboard.writeText(url)
+      toast.success('URL copiada para compartir')
     } catch {
       // fallback para navegadores sin Clipboard API
-      const ta = document.createElement('textarea')
-      ta.value = url
-      ta.style.position = 'fixed'
-      ta.style.opacity = '0'
-      document.body.appendChild(ta)
-      ta.focus()
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
+      try {
+        const ta = document.createElement('textarea')
+        ta.value = url
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.focus()
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+        toast.success('URL copiada para compartir')
+      } catch {
+        toast.error('No se pudo copiar la URL')
+      }
     }
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
   }
 
   const threat = plant?.threatCategory ? THREAT_CONFIG[plant.threatCategory] : null
@@ -121,17 +114,8 @@ export function PlantDetailPage() {
           onClick={handleShare}
           className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
         >
-          {copied ? (
-            <>
-              <Check className="size-4 text-[color:var(--status-success)]" />
-              <span className="text-[color:var(--status-success)]">Enlace copiado</span>
-            </>
-          ) : (
-            <>
-              <Share2 className="size-4" />
-              Compartir
-            </>
-          )}
+          <Share2 className="size-4" />
+          Compartir
         </button>
       </div>
 
@@ -140,6 +124,24 @@ export function PlantDetailPage() {
           No se pudo cargar la información de esta planta.
         </div>
       )}
+
+      <div className="mb-3 space-y-2">
+        <h1 className="m-0 text-2xl leading-tight text-foreground sm:text-3xl lg:text-4xl">
+          {plant?.nameCommon ?? ''}
+        </h1>
+        <div className="flex flex-wrap items-center gap-2">
+          {plant?.growthFormLabel ? (
+            <span className="inline-flex rounded-full border border-border bg-secondary px-3 py-1 text-xs font-semibold text-foreground">
+              {plant.growthFormLabel}
+            </span>
+          ) : null}
+          {plant?.scientificName ? (
+            <span className="inline-flex rounded-full border border-border bg-background px-3 py-1 text-xs italic text-muted-foreground">
+              {plant.scientificName}
+            </span>
+          ) : null}
+        </div>
+      </div>
 
       {/* Hero imagen */}
       <div className="relative mb-8 aspect-[4/3] w-full overflow-hidden rounded-[var(--radius-xl)] sm:aspect-[16/7]">
@@ -152,7 +154,6 @@ export function PlantDetailPage() {
               alt={plant?.nameCommon}
               className="h-full w-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
             {/* Botón ampliar */}
             <button
@@ -164,18 +165,6 @@ export function PlantDetailPage() {
               <ZoomIn className="size-3.5" />
               <span className="hidden sm:inline">Ampliar</span>
             </button>
-
-            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-              {plant?.growthFormLabel && (
-                <span className="mb-2 inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-                  {plant.growthFormLabel}
-                </span>
-              )}
-              <h1 className="m-0 text-2xl leading-tight text-white sm:text-3xl lg:text-4xl">
-                {plant?.nameCommon ?? ''}
-              </h1>
-              <p className="mt-1 text-sm italic text-white/75 sm:text-base">{plant?.scientificName}</p>
-            </div>
           </>
         )}
       </div>

@@ -134,6 +134,7 @@ export function PlantDetailModal({ plant, onClose }: Props) {
               </div>
 
               <div className="space-y-7 px-5 py-6 pb-10">
+
                 <div>
                   <SectionHeading icon={BookOpen} title="Datos de la planta" />
                   <div className="overflow-hidden rounded-[var(--radius-md)] border border-border bg-background px-4">

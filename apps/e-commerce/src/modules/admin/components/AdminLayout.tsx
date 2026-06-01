@@ -44,7 +44,7 @@ const accessNavigation: NavigationItem = {
 
 const roleLabelMap: Record<UserRole, string> = {
   ADMIN: 'Administrador',
-  ASSISTANT: 'Asistente',
+  ASSISTANT: 'Trabajador',
   STUDENT: 'Estudiante',
   CLIENT: 'Cliente',
 }

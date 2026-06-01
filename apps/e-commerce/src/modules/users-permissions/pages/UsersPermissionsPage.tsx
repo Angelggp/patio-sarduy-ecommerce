@@ -44,7 +44,7 @@ type UserMenuState = {
 
 const roleLabelMap: Record<UserRole, string> = {
   ADMIN: 'Administrador',
-  ASSISTANT: 'Asistente',
+  ASSISTANT: 'Trabajador',
   STUDENT: 'Estudiante',
   CLIENT: 'Cliente',
 }
