@@ -9,7 +9,7 @@ export class AddCsvImportFields1780100000000 implements MigrationInterface {
 
     // Nuevo campo: uso popular general
     await queryRunner.query(
-      `ALTER TABLE "product" ADD "mainPopularUsePopularUse" boolean NOT NULL DEFAULT false`,
+      `ALTER TABLE "product" ADD "mainPopularUsePopularuse" boolean NOT NULL DEFAULT false`,
     );
 
     // Ampliar scientificName a 255 caracteres (nombres largos del CSV)
@@ -93,7 +93,7 @@ export class AddCsvImportFields1780100000000 implements MigrationInterface {
       `ALTER TABLE "product" ALTER COLUMN "scientificName" TYPE character varying(100)`,
     );
     await queryRunner.query(
-      `ALTER TABLE "product" DROP COLUMN "mainPopularUsePopularUse"`,
+      `ALTER TABLE "product" DROP COLUMN "mainPopularUsePopularuse"`,
     );
     await queryRunner.query(`ALTER TABLE "product" DROP COLUMN "plantNumber"`);
   }

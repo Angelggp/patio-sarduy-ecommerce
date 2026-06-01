@@ -7,7 +7,7 @@ import {
   setStoredAuthSession,
 } from '@/modules/auth/utils/auth-storage'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3002/api'
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api'
 
 export const apiClient = axios.create({
   baseURL,
