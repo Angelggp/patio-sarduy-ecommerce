@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Loader2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 import { Button } from '@/components/ui/button'
@@ -41,6 +42,10 @@ const createPlantDefaultValues: CreatePlantPayload = {
   },
 }
 
+const inputCls =
+  'w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
+const errorCls = 'text-xs text-(--status-danger) mt-0.5'
+
 export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantModalProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
@@ -56,7 +61,7 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
   } = useForm<CreatePlantPayload>({
     resolver: zodResolver(createPlantPayloadSchema),
     defaultValues: createPlantDefaultValues,
-    mode: 'onBlur',
+    mode: 'onTouched',
   })
 
   useEffect(() => {
@@ -64,23 +69,10 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
       setLocalImagePreviewUrl(null)
       return
     }
-
     const objectUrl = URL.createObjectURL(selectedImageFile)
     setLocalImagePreviewUrl(objectUrl)
-
-    return () => {
-      URL.revokeObjectURL(objectUrl)
-    }
+    return () => URL.revokeObjectURL(objectUrl)
   }, [selectedImageFile])
-
-  const createErrorMessage = useMemo(() => {
-    if (!mutation.error || typeof mutation.error !== 'object' || !('message' in mutation.error)) {
-      return null
-    }
-
-    const message = (mutation.error as { message?: unknown }).message
-    return typeof message === 'string' ? message : 'No se pudo crear la planta'
-  }, [mutation.error])
 
   const closeModal = () => {
     setSelectedImageFile(null)
@@ -128,6 +120,7 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
                 type='button'
                 className='rounded-full border border-(--border-subtle) px-3 py-1 text-sm font-medium text-(--text-body) transition hover:bg-(--bg-soft-mint)'
                 onClick={closeModal}
+                disabled={mutation.isPending}
               >
                 Cerrar
               </button>
@@ -136,49 +129,42 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
             <form className='space-y-4' onSubmit={onSubmit}>
               <div className='grid gap-4 md:grid-cols-2'>
                 <label className='space-y-1'>
-                  <span className='text-sm font-semibold text-(--text-strong)'>Nombre comun</span>
-                  <input
-                    className='w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
-                    {...register('commonName')}
-                  />
-                  {errors.commonName ? (
-                    <p className='text-xs text-(--status-danger)'>{errors.commonName.message}</p>
-                  ) : null}
+                  <span className='text-sm font-semibold text-(--text-strong)'>
+                    Nombre comun <span className='text-(--status-danger)'>*</span>
+                  </span>
+                  <input className={inputCls} {...register('commonName')} />
+                  {errors.commonName && <p className={errorCls}>{errors.commonName.message}</p>}
                 </label>
 
                 <label className='space-y-1'>
-                  <span className='text-sm font-semibold text-(--text-strong)'>Nombre cientifico</span>
-                  <input
-                    className='w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
-                    {...register('scientificName')}
-                  />
-                  {errors.scientificName ? (
-                    <p className='text-xs text-(--status-danger)'>{errors.scientificName.message}</p>
-                  ) : null}
+                  <span className='text-sm font-semibold text-(--text-strong)'>
+                    Nombre cientifico <span className='text-(--status-danger)'>*</span>
+                  </span>
+                  <input className={inputCls} {...register('scientificName')} />
+                  {errors.scientificName && (
+                    <p className={errorCls}>{errors.scientificName.message}</p>
+                  )}
                 </label>
 
                 <label className='space-y-1'>
-                  <span className='text-sm font-semibold text-(--text-strong)'>Genero</span>
-                  <input
-                    className='w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
-                    {...register('genus')}
-                  />
+                  <span className='text-sm font-semibold text-(--text-strong)'>
+                    Genero <span className='text-(--status-danger)'>*</span>
+                  </span>
+                  <input className={inputCls} {...register('genus')} />
+                  {errors.genus && <p className={errorCls}>{errors.genus.message}</p>}
                 </label>
 
                 <label className='space-y-1'>
-                  <span className='text-sm font-semibold text-(--text-strong)'>Familia</span>
-                  <input
-                    className='w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
-                    {...register('family')}
-                  />
+                  <span className='text-sm font-semibold text-(--text-strong)'>
+                    Familia <span className='text-(--status-danger)'>*</span>
+                  </span>
+                  <input className={inputCls} {...register('family')} />
+                  {errors.family && <p className={errorCls}>{errors.family.message}</p>}
                 </label>
 
                 <label className='space-y-1'>
                   <span className='text-sm font-semibold text-(--text-strong)'>Forma de crecimiento</span>
-                  <select
-                    className='w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
-                    {...register('growthForm')}
-                  >
+                  <select className={inputCls} {...register('growthForm')}>
                     {growthFormValues.map((value) => (
                       <option key={value} value={value}>
                         {growthFormLabelMap[value]}
@@ -189,10 +175,7 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
 
                 <label className='space-y-1'>
                   <span className='text-sm font-semibold text-(--text-strong)'>Categoria de amenaza</span>
-                  <select
-                    className='w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
-                    {...register('threatCategory')}
-                  >
+                  <select className={inputCls} {...register('threatCategory')}>
                     {threatCategoryValues.map((value) => (
                       <option key={value} value={value}>
                         {threatCategoryLabelMap[value]}
@@ -203,26 +186,17 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
 
                 <label className='space-y-1'>
                   <span className='text-sm font-semibold text-(--text-strong)'>Origen</span>
-                  <input
-                    className='w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
-                    {...register('origin')}
-                  />
+                  <input className={inputCls} {...register('origin')} />
                 </label>
 
                 <label className='space-y-1'>
                   <span className='text-sm font-semibold text-(--text-strong)'>Procedencia</span>
-                  <input
-                    className='w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
-                    {...register('provenance')}
-                  />
+                  <input className={inputCls} {...register('provenance')} />
                 </label>
 
                 <label className='space-y-1'>
                   <span className='text-sm font-semibold text-(--text-strong)'>Recolector</span>
-                  <input
-                    className='w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
-                    {...register('collector')}
-                  />
+                  <input className={inputCls} {...register('collector')} />
                 </label>
 
                 <label className='space-y-1'>
@@ -230,24 +204,24 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
                   <input
                     type='number'
                     min={0}
-                    className='w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
-                    {...register('population', {
-                      setValueAs: (value) => Number(value),
-                    })}
+                    className={inputCls}
+                    {...register('population', { setValueAs: (v) => Number(v) })}
                   />
+                  {errors.population && <p className={errorCls}>{errors.population.message}</p>}
                 </label>
 
                 <label className='space-y-1'>
-                  <span className='text-sm font-semibold text-(--text-strong)'>Precio</span>
+                  <span className='text-sm font-semibold text-(--text-strong)'>Precio (CUP)</span>
                   <input
                     type='number'
                     min={0}
                     step='0.01'
-                    className='w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
+                    className={inputCls}
                     {...register('price', {
-                      setValueAs: (value) => (value === '' ? undefined : Number(value)),
+                      setValueAs: (v) => (v === '' ? undefined : Number(v)),
                     })}
                   />
+                  {errors.price && <p className={errorCls}>{errors.price.message}</p>}
                 </label>
 
                 <label className='space-y-1 md:col-span-2'>
@@ -256,15 +230,10 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
                     ref={fileInputRef}
                     type='file'
                     accept='image/png,image/jpeg,image/webp'
-                    className='w-full rounded-sm border border-(--border-subtle) px-3 py-2 text-sm outline-none transition focus:border-(--brand-primary)'
-                    onChange={(event) => {
-                      const file = event.target.files?.[0] ?? null
-                      setSelectedImageFile(file)
-                    }}
+                    className={inputCls}
+                    onChange={(event) => setSelectedImageFile(event.target.files?.[0] ?? null)}
                   />
-                  <p className='text-xs text-(--text-muted)'>
-                    Formatos permitidos: PNG, JPG, WEBP. Maximo 5MB.
-                  </p>
+                  <p className='text-xs text-(--text-muted)'>Formatos: PNG, JPG, WEBP. Max. 5 MB.</p>
                 </label>
               </div>
 
@@ -295,12 +264,6 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
                 />
               </div>
 
-              {createErrorMessage ? (
-                <p className='rounded-sm bg-[color-mix(in_oklab,var(--status-danger)_15%,white)] px-3 py-2 text-sm text-(--status-danger)'>
-                  {createErrorMessage}
-                </p>
-              ) : null}
-
               <div className='flex justify-end gap-2'>
                 <Button
                   type='button'
@@ -309,11 +272,19 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
                     reset(createPlantDefaultValues)
                     closeModal()
                   }}
+                  disabled={mutation.isPending}
                 >
                   Cancelar
                 </Button>
-                <Button type='submit' disabled={mutation.isPending}>
-                  {mutation.isPending ? 'Guardando...' : 'Crear planta'}
+                <Button type='submit' disabled={mutation.isPending} className='min-w-[120px]'>
+                  {mutation.isPending ? (
+                    <span className='flex items-center gap-2'>
+                      <Loader2 size={15} className='animate-spin' />
+                      Guardando...
+                    </span>
+                  ) : (
+                    'Crear planta'
+                  )}
                 </Button>
               </div>
             </form>
@@ -323,4 +294,3 @@ export function CreatePlantModal({ triggerLabel = 'Nueva planta' }: CreatePlantM
     </>
   )
 }
-

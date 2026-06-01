@@ -33,23 +33,27 @@ export class UploadsRepository {
     }
 
     // Make uploaded files publicly readable so frontend can render objectUrl directly.
-    await this.s3Client.send(
-      new PutBucketPolicyCommand({
-        Bucket: bucket,
-        Policy: JSON.stringify({
-          Version: '2012-10-17',
-          Statement: [
-            {
-              Sid: 'PublicReadGetObject',
-              Effect: 'Allow',
-              Principal: '*',
-              Action: ['s3:GetObject'],
-              Resource: [`arn:aws:s3:::${bucket}/*`],
-            },
-          ],
+    try {
+      await this.s3Client.send(
+        new PutBucketPolicyCommand({
+          Bucket: bucket,
+          Policy: JSON.stringify({
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'PublicReadGetObject',
+                Effect: 'Allow',
+                Principal: '*',
+                Action: ['s3:GetObject'],
+                Resource: [`arn:aws:s3:::${bucket}/*`],
+              },
+            ],
+          }),
         }),
-      }),
-    );
+      );
+    } catch {
+      // Bucket policy may fail on some MinIO versions - bucket access can be configured via MinIO UI instead
+    }
   }
 
   async createPresignedUploadUrl(params: {

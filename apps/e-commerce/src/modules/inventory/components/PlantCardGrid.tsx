@@ -1,4 +1,4 @@
-import { Camera, Check, Pencil, Trash2, X } from 'lucide-react'
+import { Camera, Check, Loader2, Pencil, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -66,7 +66,7 @@ function EditableFieldRow({
                 disabled={disabled}
                 aria-label={`Guardar ${label}`}
               >
-                <Check size={14} />
+                {disabled ? <Loader2 size={14} className='animate-spin' /> : <Check size={14} />}
               </button>
               <button
                 type='button'
@@ -122,6 +122,7 @@ function PlantDetailsModal({
   const [draftValue, setDraftValue] = useState<string>('')
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null)
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -129,6 +130,7 @@ function PlantDetailsModal({
     setDraftValue('')
     setPendingImageFile(null)
     setImagePreviewUrl(null)
+    setConfirmingDelete(false)
   }, [plant?.id])
 
   useEffect(() => {
@@ -238,11 +240,6 @@ function PlantDetailsModal({
   }
 
   async function handleDelete() {
-    const shouldDelete = window.confirm(`Eliminar la planta ${plantName}?`)
-    if (!shouldDelete) {
-      return
-    }
-
     await deleteMutation.mutateAsync(plantId)
     onPlantDeleted()
   }
@@ -324,8 +321,11 @@ function PlantDetailsModal({
                   disabled={isBusy}
                   className='inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--brand-primary)] px-3 py-1.5 text-sm font-semibold text-(--bg-deep-forest) transition hover:opacity-90 disabled:opacity-50'
                 >
-                  <Check size={13} />
-                  {imageMutation.isPending ? 'Subiendo...' : 'Guardar imagen'}
+                  {imageMutation.isPending ? (
+                    <><Loader2 size={13} className='animate-spin' /> Subiendo...</>
+                  ) : (
+                    <><Check size={13} /> Guardar imagen</>
+                  )}
                 </button>
                 <button
                   type='button'
@@ -649,16 +649,45 @@ function PlantDetailsModal({
         ) : null}
 
         <div className='mt-5 flex items-center justify-end'>
-          <Button
-            type='button'
-            variant='destructive'
-            onClick={handleDelete}
-            disabled={isBusy}
-            className='inline-flex items-center gap-2'
-          >
-            <Trash2 size={16} />
-            Eliminar planta
-          </Button>
+          {confirmingDelete ? (
+            <div className='flex items-center gap-3 rounded-md border border-(--status-danger)/30 bg-[color-mix(in_oklab,var(--status-danger)_8%,white)] px-4 py-3 w-full'>
+              <p className='mr-auto text-sm text-(--text-strong)'>
+                ¿Eliminar <span className='font-semibold'>{plantName}</span>? Esta accion no se puede deshacer.
+              </p>
+              <Button
+                type='button'
+                variant='destructive'
+                onClick={handleDelete}
+                disabled={isBusy}
+                className='inline-flex items-center gap-2'
+              >
+                {deleteMutation.isPending ? (
+                  <><Loader2 size={14} className='animate-spin' /> Eliminando...</>
+                ) : (
+                  'Confirmar'
+                )}
+              </Button>
+              <Button
+                type='button'
+                variant='secondary'
+                onClick={() => setConfirmingDelete(false)}
+                disabled={isBusy}
+              >
+                Cancelar
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type='button'
+              variant='destructive'
+              onClick={() => setConfirmingDelete(true)}
+              disabled={isBusy}
+              className='inline-flex items-center gap-2'
+            >
+              <Trash2 size={16} />
+              Eliminar planta
+            </Button>
+          )}
         </div>
       </div>
     </div>

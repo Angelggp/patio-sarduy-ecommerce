@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { LogIn } from 'lucide-react'
+import { Loader2, LogIn } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Navigate, useNavigate } from 'react-router-dom'
 
@@ -81,8 +81,11 @@ export function LoginPage() {
           ) : null}
 
           <Button type='submit' className='w-full' disabled={isSubmitting}>
-            <LogIn size={16} />
-            {isSubmitting ? 'Entrando...' : 'Entrar'}
+            {isSubmitting ? (
+              <><Loader2 size={16} className='animate-spin' /> Entrando...</>
+            ) : (
+              <><LogIn size={16} /> Entrar</>
+            )}
           </Button>
         </form>
       </div>

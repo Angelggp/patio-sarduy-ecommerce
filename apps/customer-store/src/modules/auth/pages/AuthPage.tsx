@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Loader2 } from 'lucide-react'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 
@@ -188,14 +189,19 @@ export function AuthPage() {
               <button
                 type="submit"
                 disabled={currentMutation.isPending}
-                className="flex w-full items-center justify-center rounded-full py-2.5 text-sm font-semibold transition-opacity hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold transition-opacity hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ backgroundColor: 'var(--bg-deep-forest)', color: 'var(--text-on-dark)' }}
               >
-                {currentMutation.isPending
-                  ? 'Procesando...'
-                  : mode === 'login'
-                    ? 'Entrar a mi cuenta'
-                    : 'Crear cuenta'}
+                {currentMutation.isPending ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Procesando...
+                  </>
+                ) : mode === 'login' ? (
+                  'Entrar a mi cuenta'
+                ) : (
+                  'Crear cuenta'
+                )}
               </button>
             </div>
 

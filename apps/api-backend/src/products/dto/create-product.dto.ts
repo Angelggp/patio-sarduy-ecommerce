@@ -41,6 +41,11 @@ class MainPopularUseDto {
   @Transform(transformBoolean)
   @IsBoolean()
   aromatic: boolean;
+
+  @IsOptional()
+  @Transform(transformBoolean)
+  @IsBoolean()
+  popularUse?: boolean;
 }
 
 export class CreateProductDto {

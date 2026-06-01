@@ -10,7 +10,6 @@ export const inventoryMainPopularUseSchema = z.object({
   culinary: z.boolean(),
   medicinal: z.boolean(),
   aromatic: z.boolean(),
-  popularUse: z.boolean().optional().default(false),
 })
 
 export const inventoryPlantSchema = z.object({
@@ -65,21 +64,21 @@ export const inventoryQueryParamsSchema = inventoryFiltersSchema.extend({
 })
 
 export const createPlantPayloadSchema = z.object({
-  commonName: z.string().min(2, 'Nombre comun muy corto').max(100),
-  scientificName: z.string().min(2).max(100),
-  genus: z.string().min(2).max(100),
-  family: z.string().min(2).max(100),
+  commonName: z.string().min(2, 'El nombre común es requerido (mín. 2 caracteres)').max(100),
+  scientificName: z.string().min(2, 'El nombre científico es requerido (mín. 2 caracteres)').max(100),
+  genus: z.string().min(2, 'El género es requerido (mín. 2 caracteres)').max(100),
+  family: z.string().min(2, 'La familia es requerida (mín. 2 caracteres)').max(100),
   growthForm: growthFormSchema,
-  origin: z.string().min(2).max(100),
-  provenance: z.string().min(2).max(100),
-  collector: z.string().min(2).max(100),
+  origin: z.string().max(100).optional().default(''),
+  provenance: z.string().max(100).optional().default(''),
+  collector: z.string().max(100).optional().default(''),
   threatCategory: threatCategorySchema,
   isEndemic: z.boolean(),
   price: z.number().min(0).optional(),
   population: z.number().int().min(0),
   registrationDate: z.string().datetime().optional(),
   deathDate: z.string().datetime().optional(),
-  imagePath: z.string().url().or(z.literal('')).optional(),
+  imagePath: z.string().optional(),
   mainPopularUse: inventoryMainPopularUseSchema,
 })
 
