@@ -17,6 +17,7 @@ export const inventoryMainPopularUseSchema = z.object({
 
 export const inventoryPlantSchema = z.object({
   id: z.number(),
+  plantNumber: z.number().nullable().optional(),
   commonName: z.string(),
   scientificName: z.string(),
   genus: z.string(),

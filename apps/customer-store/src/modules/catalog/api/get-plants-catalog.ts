@@ -90,7 +90,11 @@ export async function getPlantsCatalog(query: PlantsCatalogQuery = {}): Promise<
   const response = await apiClient.get('/products', { params })
   const payload = paginatedProductsSchema.parse(response.data)
 
-  const plants = payload.results.map((product): Plant => {
+  const sellableResults = query.hasPrice
+    ? payload.results.filter((product) => !product.deathDate)
+    : payload.results
+
+  const plants = sellableResults.map((product): Plant => {
     const uses: string[] = []
     if (product.mainPopularUse.culinary) uses.push('Culinaria')
     if (product.mainPopularUse.medicinal) uses.push('Medicinal')

@@ -106,10 +106,13 @@ export class ProductsRepository {
   }
 
   async createOne(payload: CreateProductDto): Promise<Product> {
+    const normalizedDeathDate = payload.deathDate ? new Date(payload.deathDate) : undefined;
+
     const entity = this.ormRepository.create({
       ...payload,
+      price: normalizedDeathDate ? null : payload.price,
       registrationDate: payload.registrationDate ? new Date(payload.registrationDate) : new Date(),
-      deathDate: payload.deathDate ? new Date(payload.deathDate) : undefined,
+      deathDate: normalizedDeathDate,
     });
 
     const created = await this.ormRepository.save(entity);
@@ -134,14 +137,27 @@ export class ProductsRepository {
       }
       : existing.mainPopularUse;
 
+    const nextDeathDate = payload.deathDate
+      ? new Date(payload.deathDate)
+      : payload.deathDate === undefined
+        ? existing.deathDate
+        : undefined;
+
+    const nextPrice = nextDeathDate
+      ? null
+      : payload.price !== undefined
+        ? payload.price
+        : existing.price;
+
     const entity = this.ormRepository.create({
       ...existing,
       ...payload,
+      price: nextPrice,
       mainPopularUse: mergedMainPopularUse,
       registrationDate: payload.registrationDate
         ? new Date(payload.registrationDate)
         : existing.registrationDate,
-      deathDate: payload.deathDate ? new Date(payload.deathDate) : existing.deathDate,
+      deathDate: nextDeathDate,
     });
 
     await this.ormRepository.save(entity);

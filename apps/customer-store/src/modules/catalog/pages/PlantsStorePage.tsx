@@ -57,8 +57,10 @@ export function PlantsStorePage() {
         norm.length === 0 ||
         p.nameCommon.toLowerCase().includes(norm) ||
         p.scientificName.toLowerCase().includes(norm)
+      const isActivePlant = p.deathDate === null
+      const hasDefinedPrice = p.priceCUP !== null && p.priceCUP > 0
       const matchesGroup = activeGroup === null || p.growthFormKey === activeGroup
-      return matchesSearch && matchesGroup
+      return matchesSearch && isActivePlant && hasDefinedPrice && matchesGroup
     })
     return [...base].sort((a, b) => {
       const aOut = a.stock === 0
@@ -226,12 +228,14 @@ export function PlantsStorePage() {
           {filteredPlants.map((plant, index) => {
             const quantityInCart = itemsByPlantId[plant.id] ?? 0
             const isOutOfStock = plant.stock === 0
+            const isWithoutPrice = plant.priceCUP === null || plant.priceCUP <= 0
+            const isNotForSale = isOutOfStock || isWithoutPrice
 
             return (
               <article
                 key={plant.id}
                 className={`catalog-card group relative overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card shadow-[var(--shadow-card)] transition-opacity ${
-                  isOutOfStock ? 'opacity-60' : ''
+                  isNotForSale ? 'opacity-60' : ''
                 }`}
                 style={{ animationDelay: `${index * 70}ms` }}
               >
@@ -253,6 +257,11 @@ export function PlantsStorePage() {
                   {isOutOfStock && (
                     <div className="absolute right-3 top-3 rounded-[var(--radius-pill)] bg-black/70 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
                       Agotado
+                    </div>
+                  )}
+                  {!isOutOfStock && isWithoutPrice && (
+                    <div className="absolute right-3 top-3 rounded-[var(--radius-pill)] bg-black/70 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                      Sin precio
                     </div>
                   )}
                 </div>
@@ -279,13 +288,13 @@ export function PlantsStorePage() {
                     ))}
                   </div>
 
-                  {isOutOfStock ? (
+                  {isNotForSale ? (
                     <button
                       type="button"
                       disabled
                       className="flex w-full cursor-not-allowed items-center justify-center rounded-full bg-secondary py-2.5 text-sm font-semibold text-muted-foreground opacity-50"
                     >
-                      Sin stock
+                      {isOutOfStock ? 'Sin stock' : 'No disponible'}
                     </button>
                   ) : quantityInCart === 0 ? (
                     <button

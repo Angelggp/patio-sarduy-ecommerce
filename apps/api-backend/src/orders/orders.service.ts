@@ -65,6 +65,19 @@ export class OrdersService {
       // Validar y decrementar stock inmediatamente al crear el pedido
       for (const item of payload.items) {
         const product = productById.get(item.productId)!;
+
+        if (product.deathDate) {
+          throw new ConflictException(
+            `La planta ${product.commonName} está dada de baja y no puede venderse.`,
+          );
+        }
+
+        if (product.price === null || product.price === undefined || Number(product.price) <= 0) {
+          throw new ConflictException(
+            `La planta ${product.commonName} no tiene precio disponible para la venta.`,
+          );
+        }
+
         if (product.population !== null && product.population !== undefined) {
           if (product.population < item.quantity) {
             throw new ConflictException(
@@ -95,7 +108,7 @@ export class OrdersService {
           return {
             productId: item.productId,
             quantity: item.quantity,
-            price: Number(product.price ?? 0),
+            price: Number(product.price),
           };
         }),
       });

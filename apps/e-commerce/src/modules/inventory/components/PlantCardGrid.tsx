@@ -158,6 +158,8 @@ function PlantDetailsModal({
   const plantId = plant.id
   const plantName = plant.commonName
   const registrationDate = new Date(plant.registrationDate).toLocaleDateString('es-CU')
+  const deathDate = plant.deathDate ? new Date(plant.deathDate).toLocaleDateString('es-CU') : null
+  const isDeactivated = Boolean(plant.deathDate)
   const isBusy = updateMutation.isPending || deleteMutation.isPending || imageMutation.isPending
 
   const updateErrorMessage =
@@ -493,13 +495,13 @@ function PlantDetailsModal({
 
           <EditableFieldRow
             label='Precio'
-            value={plant.price ? `$${Number(plant.price).toFixed(2)}` : 'Sin precio'}
+            value={isDeactivated ? 'No disponible (de baja)' : plant.price ? `$${Number(plant.price).toFixed(2)}` : 'Sin precio'}
             isEditing={editingField === 'price'}
             onStartEdit={() => startEditing('price', String(plant.price ?? 0))}
             onCancel={cancelEditing}
             onSave={saveEditing}
             disabled={isBusy}
-            readOnly={!canManage}
+            readOnly={!canManage || isDeactivated}
           >
             <input
               type='number'
@@ -583,8 +585,23 @@ function PlantDetailsModal({
           </EditableFieldRow>
 
           <div className='rounded-md border border-transparent px-2 py-1.5'>
+            <p className='text-xs font-semibold uppercase tracking-wide text-(--text-muted)'>No. de planta</p>
+            <p className='text-sm text-(--text-strong)'>{plant.plantNumber ?? 'No asignado'}</p>
+          </div>
+
+          <div className='rounded-md border border-transparent px-2 py-1.5'>
             <p className='text-xs font-semibold uppercase tracking-wide text-(--text-muted)'>Registro</p>
             <p className='text-sm text-(--text-strong)'>{registrationDate}</p>
+          </div>
+
+          <div className='rounded-md border border-transparent px-2 py-1.5'>
+            <p className='text-xs font-semibold uppercase tracking-wide text-(--text-muted)'>Fecha de baja</p>
+            <p className='text-sm text-(--text-strong)'>{deathDate ?? 'Activa'}</p>
+          </div>
+
+          <div className='rounded-md border border-transparent px-2 py-1.5'>
+            <p className='text-xs font-semibold uppercase tracking-wide text-(--text-muted)'>Venta</p>
+            <p className='text-sm text-(--text-strong)'>{isDeactivated ? 'No disponible' : 'Disponible'}</p>
           </div>
 
           <EditableFieldRow
