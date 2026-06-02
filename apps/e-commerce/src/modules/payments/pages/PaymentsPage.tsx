@@ -1,7 +1,8 @@
-import { AlertTriangle, CheckCheck, CreditCard, MapPinned, Phone, User2 } from 'lucide-react'
+import { AlertTriangle, CheckCheck, CreditCard, MapPinned, Phone, Trash2, User2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { useAdvanceOrderMutation } from '@/modules/orders/hooks/useAdvanceOrderMutation'
+import { useCancelOrderMutation } from '@/modules/orders/hooks/useCancelOrderMutation'
 import { useOrdersQuery } from '@/modules/orders/hooks/useOrdersQuery'
 import { type Order } from '@/modules/orders/types/orders.types'
 
@@ -16,11 +17,15 @@ function currency(value: number): string {
 function PaymentOrderCard({
   order,
   isSubmitting,
+  isCancelling,
   onMarkDelivered,
+  onCancel,
 }: {
   order: Order
   isSubmitting: boolean
+  isCancelling: boolean
   onMarkDelivered: () => void
+  onCancel: () => void
 }) {
   const totalAmount = order.items.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0)
 
@@ -79,9 +84,21 @@ function PaymentOrderCard({
         </p>
       </div>
 
-      <Button className='mt-4 w-full' onClick={onMarkDelivered} disabled={isSubmitting}>
-        {isSubmitting ? 'Actualizando...' : 'Marcar como entregado'}
-      </Button>
+      <div className='mt-4 flex items-center gap-2'>
+        <Button className='flex-1' onClick={onMarkDelivered} disabled={isSubmitting || isCancelling}>
+          {isSubmitting ? 'Actualizando...' : 'Marcar como entregado'}
+        </Button>
+        <Button
+          type='button'
+          className='h-10 w-10 rounded-full bg-destructive p-0 text-[color:var(--text-on-dark)] hover:bg-[color:var(--status-danger)]/90'
+          onClick={onCancel}
+          disabled={isSubmitting || isCancelling}
+          aria-label='Cancelar pedido'
+          title='Cancelar pedido'
+        >
+          <Trash2 size={16} />
+        </Button>
+      </div>
     </article>
   )
 }
@@ -93,6 +110,7 @@ export function PaymentsPage() {
     statuses: ['READY'],
   })
   const advanceMutation = useAdvanceOrderMutation()
+  const cancelMutation = useCancelOrderMutation()
 
   return (
     <section className='space-y-6'>
@@ -127,6 +145,17 @@ export function PaymentsPage() {
         </div>
       ) : null}
 
+      {cancelMutation.isError ? (
+        <div className='flex items-center gap-2 rounded-(--radius-sm) border border-(--status-danger)/30 bg-(--status-danger)/10 px-4 py-3 text-sm text-(--text-strong)'>
+          <AlertTriangle size={16} />
+          <span>
+            {cancelMutation.error instanceof Error
+              ? cancelMutation.error.message
+              : 'No se pudo cancelar el pedido.'}
+          </span>
+        </div>
+      ) : null}
+
       {!readyOrdersQuery.isLoading && !readyOrdersQuery.data?.results.length ? (
         <div className='rounded-(--radius-md) border border-(--border-soft) bg-(--bg-canvas) p-5 text-sm text-(--text-muted)'>
           No hay pedidos listos para cobro.
@@ -139,8 +168,12 @@ export function PaymentsPage() {
             key={order.id}
             order={order}
             isSubmitting={advanceMutation.isPending && advanceMutation.variables === order.id}
+            isCancelling={cancelMutation.isPending && cancelMutation.variables === order.id}
             onMarkDelivered={() => {
               advanceMutation.mutate(order.id)
+            }}
+            onCancel={() => {
+              cancelMutation.mutate(order.id)
             }}
           />
         ))}

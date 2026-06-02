@@ -227,13 +227,8 @@ export class OrdersService {
         throw new NotFoundException(`Pedido con id ${id} no existe.`);
       }
 
-      if (nextStatus === ORDER_STATUS.IN_PROGRESS) {
-        await ensureStockForOrderItems(orderWithRelations.items, transactionManager);
-      }
-
-      if (nextStatus === ORDER_STATUS.READY) {
-        await discountStockForOrderItems(orderWithRelations.items, transactionManager);
-      }
+      // El stock ya fue decrementado al crear el pedido (reserva en createOne).
+      // No se vuelve a decrementar al avanzar de estado para evitar doble descuento.
 
       const persistedStatus = await resolveStatusForDatabase(
         nextStatus,
