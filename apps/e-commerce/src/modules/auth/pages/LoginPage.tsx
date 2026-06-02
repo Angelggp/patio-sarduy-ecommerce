@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { setAuthSession } from '@/app/store'
 import { type AppDispatch, type RootState } from '@/app/store'
 import { authService } from '@/modules/auth/services/auth.service'
+import { getAuthErrorMessage } from '@/modules/auth/utils/get-auth-error-message'
 import { getDefaultRouteByRole, setStoredAuthSession } from '@/modules/auth/utils/auth-storage'
 
 export function LoginPage() {
@@ -34,8 +35,7 @@ export function LoginPage() {
       dispatch(setAuthSession(session))
       navigate(getDefaultRouteByRole(session.user.role), { replace: true })
     } catch (error) {
-      const defaultMessage = 'No se pudo iniciar sesion. Verifica tus credenciales.'
-      setErrorMessage(error instanceof Error ? error.message || defaultMessage : defaultMessage)
+      setErrorMessage(getAuthErrorMessage(error))
     } finally {
       setIsSubmitting(false)
     }

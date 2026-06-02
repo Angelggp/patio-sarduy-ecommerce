@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 
 import { authService } from '@/modules/auth/services/auth.service'
+import { getAuthErrorMessage } from '@/modules/auth/utils/get-auth-error-message'
 import { setStoredAuthSession } from '@/modules/auth/utils/auth-storage'
 
 type AuthMode = 'login' | 'register'
@@ -180,8 +181,8 @@ export function AuthPage() {
             </label>
 
             {currentMutation.error ? (
-              <p className="text-sm font-medium text-[color:var(--status-danger)]">
-                No se pudo completar la operación. Verifica los datos e intenta de nuevo.
+              <p className="text-sm font-medium leading-relaxed text-[color:var(--status-danger)]">
+                {getAuthErrorMessage(currentMutation.error)}
               </p>
             ) : null}
 

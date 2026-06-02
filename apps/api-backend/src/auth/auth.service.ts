@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { USER_ROLE } from '../users/entities/user.entity';
+import { USER_ROLE, User } from '../users/entities/user.entity';
 import { SafeUser, UsersService } from '../users/users.service';
+import { INACTIVE_ACCOUNT_MESSAGE } from './auth.constants';
 import { CustomerLoginDto } from './dto/customer-login.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -25,9 +26,7 @@ export class AuthService {
     const user = await this.usersService.findByUsernameWithSecrets(payload.username.trim());
     const isPasswordValid = await bcrypt.compare(payload.password, user.passwordHash);
 
-    if (!isPasswordValid || !user.isActive || user.isGuest) {
-      throw new UnauthorizedException('Credenciales invalidas.');
-    }
+    this.assertCredentialsAllowLogin(user, isPasswordValid);
 
     const tokens = await this.createTokenPair({
       sub: user.id,
@@ -69,9 +68,7 @@ export class AuthService {
 
     if (existingUser) {
       const isPasswordValid = await bcrypt.compare(payload.password, existingUser.passwordHash);
-      if (!isPasswordValid || !existingUser.isActive || existingUser.isGuest) {
-        throw new UnauthorizedException('Credenciales invalidas.');
-      }
+      this.assertCredentialsAllowLogin(existingUser, isPasswordValid);
 
       const tokens = await this.createTokenPair({
         sub: existingUser.id,
@@ -142,6 +139,16 @@ export class AuthService {
 
   async getSessionUser(userId: number): Promise<SafeUser> {
     return this.usersService.findById(userId);
+  }
+
+  private assertCredentialsAllowLogin(user: User, isPasswordValid: boolean): void {
+    if (!isPasswordValid || user.isGuest) {
+      throw new UnauthorizedException('Credenciales invalidas.');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException(INACTIVE_ACCOUNT_MESSAGE);
+    }
   }
 
   private async createTokenPair(payload: {
