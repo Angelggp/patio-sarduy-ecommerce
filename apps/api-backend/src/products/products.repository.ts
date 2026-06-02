@@ -180,26 +180,59 @@ export class ProductsRepository {
 
   async importOne(data: Partial<Product>): Promise<Product> {
     const entity = this.ormRepository.create(data);
-    return this.ormRepository.save(entity);
+    const saved = await this.ormRepository.save(entity);
+    if (saved.plantNumber == null) {
+      saved.plantNumber = saved.id;
+      return this.ormRepository.save(saved);
+    }
+    return saved;
   }
 
-  async existsByPlantNumberOrNames(
+  async findByPlantNumberOrNames(
     plantNumber: number | undefined,
     commonName: string,
     scientificName: string,
-  ): Promise<boolean> {
-    const qb = this.ormRepository.createQueryBuilder('product');
-
+  ): Promise<Product | null> {
     if (plantNumber != null && !isNaN(plantNumber)) {
-      qb.where('product.plantNumber = :plantNumber', { plantNumber });
-    } else {
-      qb.where(
-        'LOWER(product.commonName) = LOWER(:commonName) AND LOWER(product.scientificName) = LOWER(:scientificName)',
-        { commonName, scientificName },
-      );
+      const byNumber = await this.ormRepository.findOne({ where: { plantNumber } });
+      if (byNumber) return byNumber;
     }
 
-    const count = await qb.getCount();
-    return count > 0;
+    if (commonName && scientificName) {
+      return this.ormRepository
+        .createQueryBuilder('product')
+        .where('LOWER(product.commonName) = LOWER(:commonName)', { commonName })
+        .andWhere('LOWER(product.scientificName) = LOWER(:scientificName)', { scientificName })
+        .getOne();
+    }
+
+    return null;
+  }
+
+  async updateFromCsvImport(id: number, data: Partial<Product>): Promise<Product> {
+    const existing = await this.ormRepository.findOne({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(`Producto con id ${id} no existe.`);
+    }
+
+    const deathDate = data.deathDate !== undefined ? data.deathDate : existing.deathDate;
+    const price = deathDate ? null : existing.price;
+
+    const entity = this.ormRepository.create({
+      ...existing,
+      ...data,
+      price,
+      imagePath: existing.imagePath,
+      mainPopularUse: data.mainPopularUse ?? existing.mainPopularUse,
+    });
+
+    await this.ormRepository.save(entity);
+
+    const updated = await this.ormRepository.findOne({ where: { id } });
+    if (!updated) {
+      throw new NotFoundException(`Producto con id ${id} no existe.`);
+    }
+
+    return updated;
   }
 }

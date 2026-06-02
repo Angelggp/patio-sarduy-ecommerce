@@ -127,7 +127,7 @@ export type CreatePresignedUploadResponse = z.infer<typeof createPresignedUpload
 
 export const importCsvResultSchema = z.object({
   inserted: z.number(),
-  skipped: z.number().default(0),
+  updated: z.number().default(0),
   errors: z.array(z.object({ commonName: z.string(), message: z.string() })),
 })
 

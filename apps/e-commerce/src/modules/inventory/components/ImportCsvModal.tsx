@@ -55,7 +55,8 @@ export function ImportCsvModal() {
           <div className='w-full max-w-lg rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-6 shadow-lg'>
             <h2 className='mb-1 text-lg font-semibold text-(--text-primary)'>Importar plantas desde CSV</h2>
             <p className='mb-5 text-sm text-(--text-muted)'>
-              Selecciona el archivo CSV exportado del catalogo. Las plantas se agregan sin borrar las existentes.
+              Selecciona el archivo CSV exportado del catalogo. Las plantas nuevas se agregan y las existentes se
+              actualizan con los datos del archivo (stock, nombres, usos, etc.).
             </p>
 
             {/* Resultado */}
@@ -66,13 +67,13 @@ export function ImportCsvModal() {
                     Importacion completada
                   </p>
                   <p className='mt-1 text-(--text-secondary)'>
-                    Plantas insertadas: <span className='font-semibold'>{result.inserted}</span>
-                                    {result.skipped > 0 && (
-                                      <p className='mt-1 text-(--text-secondary)'>
-                                        Omitidas (ya existian): <span className='font-semibold'>{result.skipped}</span>
-                                      </p>
-                                    )}
+                    Plantas nuevas: <span className='font-semibold'>{result.inserted}</span>
                   </p>
+                  {result.updated > 0 && (
+                    <p className='mt-1 text-(--text-secondary)'>
+                      Plantas actualizadas: <span className='font-semibold'>{result.updated}</span>
+                    </p>
+                  )}
                   {result.errors.length > 0 && (
                     <div className='mt-3'>
                       <p className='font-medium text-red-600'>

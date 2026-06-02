@@ -10,9 +10,17 @@ import { ProductsRepository } from './products.repository';
 
 export interface ImportCsvResult {
   inserted: number;
-  skipped: number;
+  updated: number;
   errors: { commonName: string; message: string }[];
 }
+
+type CsvProductData = Partial<Product> & {
+  commonName: string;
+  scientificName: string;
+  genus: string;
+  family: string;
+  mainPopularUse: Product['mainPopularUse'];
+};
 
 function cleanFamily(value: string): string {
   return value.replace(/\s*\(\d+\)\s*G:\d+/gi, '').trim();
@@ -52,6 +60,38 @@ function parseCsvDate(value: string): Date | undefined {
 
 function parseBoolCell(value: string): boolean {
   return value.trim().toLowerCase() === 'x';
+}
+
+function buildProductDataFromCsvRow(row: Record<string, string>): CsvProductData | null {
+  const commonName = (row['Nombre Vulgar'] ?? '').trim();
+  if (!commonName) return null;
+
+  const populationRaw = (row['Cantidad de individuos'] ?? '').trim();
+  const plantNumberRaw = (row['No. Planta'] ?? '').trim();
+  const plantNumber = plantNumberRaw ? parseInt(plantNumberRaw, 10) : undefined;
+
+  return {
+    plantNumber: plantNumber != null && !isNaN(plantNumber) ? plantNumber : undefined,
+    commonName,
+    scientificName: (row['Nombre Científico'] ?? '').trim(),
+    genus: (row['Género'] ?? '').trim(),
+    family: cleanFamily(row['Familia'] ?? ''),
+    growthForm: parseGrowthForm(row['Porte'] ?? ''),
+    origin: (row['Origen'] ?? '').trim() || undefined,
+    provenance: (row['Procedencia '] ?? row['Procedencia'] ?? '').trim() || undefined,
+    collector: (row['Colector'] ?? '').trim() || undefined,
+    threatCategory: parseThreatCategory(row['Categoria de amenaza'] ?? ''),
+    isEndemic: (row['Endemismo'] ?? '').trim() ? parseBoolCell(row['Endemismo']) : undefined,
+    population: populationRaw ? parseInt(populationRaw, 10) : undefined,
+    registrationDate: parseCsvDate(row['Fecha de alta'] ?? ''),
+    deathDate: parseCsvDate(row['Fecha de Muerte'] ?? ''),
+    mainPopularUse: {
+      popularUse: parseBoolCell(row['Mayor uso popular'] ?? ''),
+      medicinal: parseBoolCell(row['Medicinal'] ?? ''),
+      aromatic: parseBoolCell(row['Aromática'] ?? ''),
+      culinary: parseBoolCell(row['Alimento'] ?? ''),
+    },
+  };
 }
 
 @Injectable()
@@ -110,62 +150,35 @@ export class ProductsService {
     });
 
     let inserted = 0;
-    let skipped = 0;
+    let updated = 0;
     const errors: ImportCsvResult['errors'] = [];
 
     for (const row of records) {
-      const commonName = (row['Nombre Vulgar'] ?? '').trim();
-      if (!commonName) continue;
+      const productData = buildProductDataFromCsvRow(row);
+      if (!productData) continue;
 
       try {
-        const populationRaw = (row['Cantidad de individuos'] ?? '').trim();
-        const plantNumberRaw = (row['No. Planta'] ?? '').trim();
-        const plantNumber = plantNumberRaw ? parseInt(plantNumberRaw, 10) : undefined;
-        const scientificName = (row['Nombre Científico'] ?? '').trim();
-
-        // Verificar duplicado: mismo No. Planta o misma combinacion nombre vulgar + nombre cientifico
-        const isDuplicate = await this.productsRepository.existsByPlantNumberOrNames(
-          plantNumber,
-          commonName,
-          scientificName,
+        const existing = await this.productsRepository.findByPlantNumberOrNames(
+          productData.plantNumber,
+          productData.commonName,
+          productData.scientificName,
         );
 
-        if (isDuplicate) {
-          skipped++;
-          continue;
+        if (existing) {
+          await this.productsRepository.updateFromCsvImport(existing.id, productData);
+          updated++;
+        } else {
+          await this.productsRepository.importOne(productData);
+          inserted++;
         }
-
-        await this.productsRepository.importOne({
-          plantNumber: plantNumber,
-          commonName,
-          scientificName,
-          genus: (row['Género'] ?? '').trim(),
-          family: cleanFamily(row['Familia'] ?? ''),
-          growthForm: parseGrowthForm(row['Porte'] ?? ''),
-          origin: (row['Origen'] ?? '').trim() || undefined,
-          provenance: (row['Procedencia '] ?? row['Procedencia'] ?? '').trim() || undefined,
-          collector: (row['Colector'] ?? '').trim() || undefined,
-          threatCategory: parseThreatCategory(row['Categoria de amenaza'] ?? ''),
-          isEndemic: (row['Endemismo'] ?? '').trim() ? parseBoolCell(row['Endemismo']) : undefined,
-          population: populationRaw ? parseInt(populationRaw, 10) : undefined,
-          registrationDate: parseCsvDate(row['Fecha de alta'] ?? ''),
-          deathDate: parseCsvDate(row['Fecha de Muerte'] ?? ''),
-          mainPopularUse: {
-            popularUse: parseBoolCell(row['Mayor uso popular'] ?? ''),
-            medicinal: parseBoolCell(row['Medicinal'] ?? ''),
-            aromatic: parseBoolCell(row['Aromática'] ?? ''),
-            culinary: parseBoolCell(row['Alimento'] ?? ''),
-          },
-        });
-        inserted++;
       } catch (err) {
         errors.push({
-          commonName,
+          commonName: productData.commonName,
           message: err instanceof Error ? err.message : String(err),
         });
       }
     }
 
-    return { inserted, skipped, errors };
+    return { inserted, updated, errors };
   }
 }
