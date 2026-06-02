@@ -44,6 +44,7 @@ export function PlantsStorePage() {
 
   const { data, isLoading, isFetching, error } = usePlantsCatalogQuery({
     q,
+    growthForm: activeGroup ?? undefined,
     useFilter: activeUse ?? undefined,
     hasPrice: true,
   })
@@ -59,16 +60,10 @@ export function PlantsStorePage() {
         p.scientificName.toLowerCase().includes(norm)
       const isActivePlant = p.deathDate === null
       const hasDefinedPrice = p.priceCUP !== null && p.priceCUP > 0
-      const matchesGroup = activeGroup === null || p.growthFormKey === activeGroup
-      return matchesSearch && isActivePlant && hasDefinedPrice && matchesGroup
+      return matchesSearch && isActivePlant && hasDefinedPrice
     })
-    return [...base].sort((a, b) => {
-      const aOut = a.stock === 0
-      const bOut = b.stock === 0
-      if (aOut === bOut) return 0
-      return aOut ? 1 : -1
-    })
-  }, [allPlants, q, activeGroup])
+    return base
+  }, [allPlants, q])
 
   return (
     <section className="pb-8">

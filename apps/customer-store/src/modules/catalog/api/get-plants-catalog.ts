@@ -43,24 +43,23 @@ const paginatedProductsSchema = z.object({
 const growthFormLabelMap: Record<string, string> = {
   TREE: 'Árbol',
   SHRUB: 'Arbustivo',
-  HERB: 'Herbásea',
+  HERB: 'Herbácea',
   CLIMBER: 'Trepadora',
   LIANA: 'Liana',
+  SUCCULENT: 'Sin clasificar',
+  PALM: 'Sin clasificar',
 }
 
 function normalizeGrowthForm(value: z.infer<typeof productSchema>['growthForm']): Plant['growthFormKey'] {
-  if (value === 'TREE' || value === 'SHRUB' || value === 'HERB' || value === 'CLIMBER' || value === 'LIANA') {
-    return value
-  }
-
-  return null
+  if (!value) return null
+  return value
 }
 
 const fallbackImage = plantaFallback as string
 
 export type PlantsCatalogQuery = {
   q?: string
-  growthForm?: string
+  growthForm?: Plant['growthFormKey']
   useFilter?: 'culinary' | 'medicinal' | 'aromatic'
   hasPrice?: boolean
 }
@@ -125,6 +124,8 @@ export async function getPlantsCatalog(query: PlantsCatalogQuery = {}): Promise<
       isEndemic: product.isEndemic ?? null,
     }
   })
+
+  plants.sort((a, b) => Number(a.id) - Number(b.id))
 
   return { plants, total: payload.meta.total }
 }

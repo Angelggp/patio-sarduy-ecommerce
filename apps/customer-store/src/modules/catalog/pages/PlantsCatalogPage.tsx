@@ -4,7 +4,7 @@ import { Eye, Search, SlidersHorizontal, X } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { usePlantsCatalogQuery } from '@/modules/catalog/hooks/use-plants-catalog-query'
-import type { GrowthFormKey, Plant } from '@/modules/catalog/types/plant'
+import type { GrowthFormKey } from '@/modules/catalog/types/plant'
 
 type UseFilterId = 'culinary' | 'medicinal' | 'aromatic'
 
@@ -17,7 +17,7 @@ const USE_PILLS: { id: UseFilterId; label: string }[] = [
 const GROWTH_GROUPS: { key: GrowthFormKey; label: string }[] = [
   { key: 'TREE', label: 'Árbol' },
   { key: 'SHRUB', label: 'Arbustivo' },
-  { key: 'HERB', label: 'Herbásea' },
+  { key: 'HERB', label: 'Herbácea' },
   { key: 'CLIMBER', label: 'Trepadora' },
   { key: 'LIANA', label: 'Liana' },
 ]
@@ -31,6 +31,7 @@ export function PlantsCatalogPage() {
 
   const { data, isLoading, error } = usePlantsCatalogQuery({
     q,
+    growthForm: activeGroup ?? undefined,
     useFilter: activeUse ?? undefined,
   })
 
@@ -47,31 +48,6 @@ export function PlantsCatalogPage() {
         p.genus.toLowerCase().includes(norm),
     )
   }, [plants, q])
-
-  const groups = useMemo(() => {
-    const map = new Map<GrowthFormKey | null, Plant[]>()
-    for (const plant of filtered) {
-      const key = plant.growthFormKey
-      const arr = map.get(key) ?? []
-      arr.push(plant)
-      map.set(key, arr)
-    }
-    const result: { key: GrowthFormKey | null; label: string; plants: Plant[] }[] = []
-    for (const g of GROWTH_GROUPS) {
-      const items = map.get(g.key)
-      if (items && items.length > 0) result.push({ key: g.key, label: g.label, plants: items })
-    }
-    const unclassified = map.get(null)
-    if (unclassified && unclassified.length > 0) {
-      result.push({ key: null, label: 'Sin clasificar', plants: unclassified })
-    }
-    return result
-  }, [filtered])
-
-  const visibleGroups = useMemo(
-    () => (activeGroup ? groups.filter((g) => g.key === activeGroup) : groups),
-    [groups, activeGroup],
-  )
 
   return (
     <section className="pb-8">
@@ -189,7 +165,7 @@ export function PlantsCatalogPage() {
         <div className="mb-6 mt-4 text-sm text-muted-foreground">
           {isLoading
             ? 'Cargando catálogo...'
-            : `${visibleGroups.reduce((s, g) => s + g.plants.length, 0)} planta${visibleGroups.reduce((s, g) => s + g.plants.length, 0) !== 1 ? 's' : ''} en el catálogo`}
+            : `${filtered.length} planta${filtered.length !== 1 ? 's' : ''} en el catálogo`}
         </div>
 
         {error && (
@@ -199,23 +175,16 @@ export function PlantsCatalogPage() {
         )}
 
         {isLoading ? (
-          <div className="space-y-10">
-            {Array.from({ length: 2 }).map((_, gi) => (
-              <div key={gi}>
-                <div className="mb-4 h-6 w-32 animate-pulse rounded bg-secondary" />
-                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card"
-                    >
-                      <div className="aspect-[4/3] animate-pulse bg-secondary" />
-                      <div className="space-y-2 px-3 pb-3 pt-2.5">
-                        <div className="h-3 w-24 animate-pulse rounded-full bg-secondary" />
-                        <div className="h-5 w-3/4 animate-pulse rounded bg-secondary" />
-                      </div>
-                    </div>
-                  ))}
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card"
+              >
+                <div className="aspect-[4/3] animate-pulse bg-secondary" />
+                <div className="space-y-2 px-3 pb-3 pt-2.5">
+                  <div className="h-3 w-24 animate-pulse rounded-full bg-secondary" />
+                  <div className="h-5 w-3/4 animate-pulse rounded bg-secondary" />
                 </div>
               </div>
             ))}
@@ -225,63 +194,55 @@ export function PlantsCatalogPage() {
             No se encontraron plantas con esos filtros. Ajusta tu búsqueda para ver más opciones.
           </div>
         ) : (
-          <div className="space-y-10">
-            {visibleGroups.map(({ key, label, plants: groupPlants }) => (
-              <div key={key ?? 'unclassified'}>
-                <h2 className="mb-4 text-lg font-semibold text-foreground">{label}</h2>
-                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-                  {groupPlants.map((plant, index) => (
-                    <Link
-                      key={plant.id}
-                      to={`/plantas/${plant.id}`}
-                      className="catalog-card group relative overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card text-left shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-float)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                      {/* Imagen */}
-                      <div className="relative aspect-[4/3] overflow-hidden">
-                        <img
-                          src={plant.imageUrl}
-                          alt={plant.nameCommon}
-                          loading="lazy"
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
-                        />
-                        {/* Hover overlay */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                          <Eye className="size-7 text-white" />
-                          <span className="text-xs font-semibold text-white tracking-wide">
-                            Ver más
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Nombres */}
-                      <div className="px-3 pb-3 pt-2.5">
-                        <p className="text-[11px] italic leading-tight text-muted-foreground">
-                          {plant.scientificName}
-                        </p>
-                        <p className="mt-0.5 text-sm font-semibold leading-snug text-foreground">
-                          {plant.nameCommon}
-                        </p>
-                        {/* Badges de uso */}
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {plant.uses.map((u) => (
-                            <span
-                              key={u}
-                              className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
-                            >
-                              {u}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+            {filtered.map((plant, index) => (
+              <Link
+                key={plant.id}
+                to={`/plantas/${plant.id}`}
+                className="catalog-card group relative overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card text-left shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-float)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                {/* Imagen */}
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  <img
+                    src={plant.imageUrl}
+                    alt={plant.nameCommon}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
+                  />
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <Eye className="size-7 text-white" />
+                    <span className="text-xs font-semibold text-white tracking-wide">
+                      Ver más
+                    </span>
+                  </div>
                 </div>
-              </div>
+
+                {/* Nombres */}
+                <div className="px-3 pb-3 pt-2.5">
+                  <p className="text-[11px] italic leading-tight text-muted-foreground">
+                    {plant.scientificName}
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold leading-snug text-foreground">
+                    {plant.nameCommon}
+                  </p>
+                  {/* Badges de uso */}
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {plant.uses.map((u) => (
+                      <span
+                        key={u}
+                        className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+                      >
+                        {u}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         )}
       </section>
   )
 }
-
