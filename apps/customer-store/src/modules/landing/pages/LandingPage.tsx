@@ -344,6 +344,19 @@ export function LandingPage() {
               <ul className='space-y-2 text-sm'>
                 <li>
                   <a
+                    href='https://wa.me/5355189097'
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='transition-colors'
+                    style={{ color: 'rgba(245,248,245,0.65)' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-on-dark)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,248,245,0.65)')}
+                  >
+                    WhatsApp · +53 5 5189097
+                  </a>
+                </li>
+                <li>
+                  <a
                     href='mailto:patiosarduy@gmail.com'
                     className='transition-colors'
                     style={{ color: 'rgba(245,248,245,0.65)' }}
