@@ -46,7 +46,7 @@ export function LoginPage() {
       <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,_rgba(34,211,95,0.2),_transparent_40%),radial-gradient(circle_at_80%_80%,_rgba(8,39,21,0.15),_transparent_45%)]' />
 
       <div className='relative w-full max-w-md rounded-(--radius-xl) border border-(--border-subtle) bg-(--bg-surface) p-6 shadow-(--shadow-card)'>
-        <p className='text-xs font-semibold uppercase tracking-[0.2em] text-(--text-muted)'>Patio Sarduy</p>
+        <p className='text-xs font-semibold uppercase tracking-[0.2em] text-(--text-muted)'>El Patio</p>
         <h1 className='mt-2 text-3xl font-semibold text-(--text-strong)'>Iniciar Sesion</h1>
         <p className='mt-1 text-sm text-(--text-body)'>Accede con tu usuario para entrar al panel.</p>
 

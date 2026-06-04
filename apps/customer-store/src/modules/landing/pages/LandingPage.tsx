@@ -12,8 +12,8 @@ const INFO_ITEMS = [
   },
   {
     icon: MapPin,
-    title: 'Ubicación',
-    lines: ['Cienfuegos, Cuba', 'Organopónico comunitario'],
+    title: 'Dirección',
+    lines: ['Calle 53 #6801 / 68 y 70 San Lázaro. Cienfuegos, Cuba. ', 'Organopónico comunitario'],
   },
   {
     icon: Sprout,
@@ -114,7 +114,7 @@ export function LandingPage() {
             className='mb-6 leading-tigh '
             style={{ fontSize: 'clamp(2.8rem, 8vw, 5rem)', color: 'white' }}
           >
-            Patio Sarduy
+            "El Patio"
           </motion.h1>
 
           <motion.p
@@ -326,7 +326,7 @@ export function LandingPage() {
             {/* Marca */}
             <div className='space-y-1.5'>
               <p className='font-heading text-xl' style={{ color: 'var(--text-on-dark)' }}>
-                Patio Sarduy
+                El Patio
               </p>
               <p className='text-sm' style={{ color: 'rgba(245,248,245,0.5)' }}>
                 Organopónico comunitario · Cienfuegos, Cuba
@@ -389,7 +389,7 @@ export function LandingPage() {
                     onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-on-dark)')}
                     onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,248,245,0.65)')}
                   >
-                    Facebook · Patio Sarduy
+                    Facebook · El Patio
                   </a>
                 </li>
               </ul>
@@ -404,7 +404,7 @@ export function LandingPage() {
               color: 'rgba(245,248,245,0.3)',
             }}
           >
-            © {new Date().getFullYear()} Patio Sarduy. Todos los derechos reservados.
+            © {new Date().getFullYear()} El Patio. Todos los derechos reservados.
           </div>
         </div>
       </footer>

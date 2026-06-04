@@ -1,6 +1,6 @@
 # Customer Store App
 
-Base frontend para clientes de Patio Sarduy.
+Base frontend para clientes de El Patio.
 
 ## Incluye
 - React + TypeScript + Vite

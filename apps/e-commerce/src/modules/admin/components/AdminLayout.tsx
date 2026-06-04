@@ -115,7 +115,7 @@ function SidebarContent({
           <LayoutGrid className="size-5 text-[color:var(--brand-primary)]" />
         ) : (
           <>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--text-muted)]">Patio Sarduy</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--text-muted)]">El Patio</p>
             <p className="mt-0.5 text-base font-semibold text-[color:var(--text-strong)]">Panel Admin</p>
           </>
         )}
@@ -202,7 +202,7 @@ export function AdminLayout() {
       <header className="sticky top-0 z-40 flex items-center justify-between border-b border-[color:var(--border-soft)] bg-[color:var(--bg-surface)] px-4 py-3 lg:hidden">
         <div className="flex items-center gap-2">
           <LayoutGrid className="size-5 text-[color:var(--brand-primary)]" />
-          <span className="font-semibold text-[color:var(--text-strong)]">Patio Sarduy</span>
+          <span className="font-semibold text-[color:var(--text-strong)]">El Patio</span>
         </div>
         <button
           type="button"

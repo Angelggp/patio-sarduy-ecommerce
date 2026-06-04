@@ -44,7 +44,7 @@ export function AuthPage() {
         style={{ backgroundColor: 'var(--bg-deep-forest)' }}
       >
         <p className="font-heading text-xl" style={{ color: 'var(--text-on-dark)' }}>
-          Patio Sarduy
+          El Patio
         </p>
 
         <div className="space-y-4">
@@ -82,7 +82,7 @@ export function AuthPage() {
       <div className="flex flex-col justify-center bg-card p-6 lg:p-10">
         {/* Logo visible solo en mobile */}
         <div className="mb-8 lg:hidden">
-          <p className="font-heading text-xl text-foreground">Patio Sarduy</p>
+          <p className="font-heading text-xl text-foreground">El Patio</p>
           <p className="text-xs text-muted-foreground">Acceso de clientes</p>
         </div>
 

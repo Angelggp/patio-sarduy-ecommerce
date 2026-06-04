@@ -1,6 +1,6 @@
-# Patio Sarduy — E-commerce
+# El Patio — E-commerce
 
-Plataforma de venta online para el organopónico comunitario Patio Sarduy, Cienfuegos, Cuba.  
+Plataforma de venta online para el organopónico comunitario El Patio, Cienfuegos, Cuba.  
 Permite explorar el catálogo de plantas, armar un carrito y confirmar pedidos de recogida en tienda.
 
 ---

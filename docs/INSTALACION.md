@@ -1,5 +1,5 @@
 # Guia de Instalacion y Configuracion
-## Patio Sarduy — Sistema de Catalogo de Plantas
+## El Patio — Sistema de Catalogo de Plantas
 
 ---
 
@@ -276,7 +276,7 @@ patio-sarduy-ecommerce/
 - [ ] **Formulario de planta:** agregar campos `noPlanta`, `fechaAlta`, `fechaMuerte`
 - [ ] **Vista de inventario:** mostrar columnas relevantes para el contexto academico
   (nombre cientifico, familia, forma de crecimiento, categoria de amenaza IUCN)
-- [ ] **Ajustar textos:** cambiar "Patio Sarduy" por el nombre definitivo del sistema
+- [ ] **Ajustar textos:** cambiar "El Patio" por el nombre definitivo del sistema
   si corresponde a la tesis
 
 ### Frontend — Tienda publica (`customer-store`)

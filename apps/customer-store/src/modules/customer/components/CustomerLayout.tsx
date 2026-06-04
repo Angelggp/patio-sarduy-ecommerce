@@ -75,7 +75,7 @@ export function CustomerLayout() {
       <header className='hidden sticky top-0 z-40 border-b border-border bg-card/85 backdrop-blur-md lg:block'>
         <div className='mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 lg:px-8'>
           <Link to='/' className='shrink-0 font-heading text-lg text-foreground'>
-            Patio Sarduy
+            El Patio
           </Link>
 
           {/* Nav desktop — oculto en mobile */}
